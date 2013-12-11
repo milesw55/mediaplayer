@@ -1,7 +1,7 @@
 Media Player
 
 contributors: milesw55, ntreado
-url: None
+url: https://github.com/milesw55/mediaplayer.git 
 
 This project will be a GUI based music player
 that allows the user to add any number of songs
