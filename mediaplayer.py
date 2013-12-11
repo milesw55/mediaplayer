@@ -17,11 +17,13 @@ class MusicWidget(QtGui.QWidget):
     mainLayout.addWidget(addSongButton)
     self.songList = QtGui.QListWidget()
     content = ""
+    self.names = {}
     with open("songlist.txt", 'r') as f:
       content = f.read()
     for song in content.split('\n'):
       if song != "":
-        self.songList.addItem(song)
+        self.names[os.path.basename(song)] = song
+        self.songList.addItem(os.path.basename(song))
     mainLayout.addWidget(self.songList)
     buttonLayout = QtGui.QHBoxLayout()
     self.playButton = QtGui.QPushButton("Play")
@@ -42,13 +44,14 @@ class MusicWidget(QtGui.QWidget):
     fileName, fileType = QtGui.QFileDialog.getOpenFileName(self, "Add song", os.getcwd(), "WAV Files (*.wav)")
     with open("songlist.txt", 'a') as f:
       f.write(fileName + '\n')
-    self.songList.addItem(fileName)
+    self.names[os.path.basename(fileName)] = filename
+    self.songList.addItem(os.path.basename(fileName))
   
   ##
   #  This function will act as a slot to the 'play button'
   #  being triggered.
   def playTriggered(self):
-    song = self.songList.currentItem().text()
+    song = self.names[self.songList.currentItem().text()]
     if (self.prevSong is None) or (self.prevSong != song):
       self.prevSong = song
       pygame.mixer.music.load(song)
@@ -59,6 +62,7 @@ class MusicWidget(QtGui.QWidget):
       pygame.mixer.music.unpause()
     else:
       pygame.mixer.music.play()
+
   ##
   #  This function will act as a slot to the 'pause button'
   #  being triggered.
