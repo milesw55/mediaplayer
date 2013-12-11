@@ -74,7 +74,7 @@ class MusicWidget(QtGui.QWidget):
     fileName, fileType = QtGui.QFileDialog.getOpenFileName(self, "Add song", os.getcwd(), "WAV Files (*.wav)")
     with open("songlist.txt", 'a') as f:
       f.write(fileName + '\n')
-    self.names[os.path.basename(fileName)] = filename
+    self.names[os.path.basename(fileName)] = fileName
     self.songList.addItem(os.path.basename(fileName))
   
   ##
