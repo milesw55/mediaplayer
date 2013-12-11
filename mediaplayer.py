@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 import pygame
 import os, sys
+import subprocess
 from PySide import QtGui, QtCore
 
 ##
@@ -14,10 +15,16 @@ class MusicWidget(QtGui.QWidget):
     self.setWindowTitle("WAV Player")
     mainLayout = QtGui.QHBoxLayout(self)
     leftLayout = QtGui.QVBoxLayout()
-    rightLayout = QtGui.QVBoxLayout()
-    addSongButton = QtGui.QPushButton("Add song")
-    addSongButton.clicked.connect(self.addSong)
-    rightLayout.addWidget(addSongButton)
+    self.rightLayout = QtGui.QVBoxLayout()
+    self.addSongButton = QtGui.QPushButton("Add song")
+    self.addSongButton.clicked.connect(self.addSong)
+    self.findSongButton = QtGui.QPushButton("Find song")
+    self.findSongButton.clicked.connect(self.findSong)
+    self.findSongGroup = QtGui.QGroupBox("Find song:")
+    self.songButtonLayout = QtGui.QHBoxLayout()
+    self.songButtonLayout.addWidget(self.addSongButton)
+    self.songButtonLayout.addWidget(self.findSongButton)
+    self.rightLayout.addLayout(self.songButtonLayout)
     groupbox = QtGui.QGroupBox("Your songs:")
     gboxLayout = QtGui.QVBoxLayout()
     self.songList = QtGui.QListWidget()
@@ -42,7 +49,7 @@ class MusicWidget(QtGui.QWidget):
     buttonLayout.addWidget(pauseButton)
     leftLayout.addLayout(buttonLayout)
     mainLayout.addLayout(leftLayout)
-    mainLayout.addLayout(rightLayout)
+    mainLayout.addLayout(self.rightLayout)
     self.started = False
     pygame.mixer.init()
     self.prevSong = None
@@ -58,7 +65,40 @@ class MusicWidget(QtGui.QWidget):
     self.songList.addItem(os.path.basename(fileName))
   
   ##
-  #
+  #  This will act as a slot for the 'find song' button being clicked.
+  def findSong(self):
+    groupLayout = QtGui.QVBoxLayout(self.findSongGroup)
+    urlLayout = QtGui.QHBoxLayout()
+    urlLabel = QtGui.QLabel("URL:")
+    self.urlLine = QtGui.QLineEdit()
+    urlLayout.addWidget(urlLabel)
+    urlLayout.addWidget(self.urlLine)
+    nameLayout = QtGui.QHBoxLayout()
+    nameLabel = QtGui.QLabel("Name of song:")
+    self.nameLine = QtGui.QLineEdit()
+    nameEnd = QtGui.QLabel(".wav")
+    nameLayout.addWidget(nameLabel)
+    nameLayout.addWidget(self.nameLine)
+    nameLayout.addWidget(nameEnd)
+    self.addButton = QtGui.QPushButton("Add")
+    self.addButton.clicked.connect(self.onAddClicked)
+    groupLayout.addLayout(urlLayout)
+    groupLayout.addLayout(nameLayout)
+    groupLayout.addWidget(self.addButton)
+    self.rightLayout.addWidget(self.findSongGroup)
+    
+  ##
+  #  This will be triggered when the addButton is clicked.
+  def onAddClicked(self):
+    subprocess.call(['youtube-dl', '-o', "{}.mp4".format(self.nameLine.text()), self.urlLine.text()])
+    subprocess.call(['ffmpeg', '-i', "{}.mp4".format(self.nameLine.text()), "{}.wav".format(self.nameLine.text())])
+    with open("songlist.txt", 'a') as f:
+      f.write(os.getcwd()+ "/" + "{}.wav".format(self.nameLine.text()) + "\n")
+    self.names["{}.wav".format(self.nameLine.text())] = os.getcwd() + "/{}.wav".format(self.nameLine.text())
+    self.songList.addItem("{}.wav".format(self.nameLine.text()))
+
+  ##
+  #  This is triggered when an item in the list is double clicked. A song will play.
   def onItemDoubleClicked(self, item):
     song = self.names[item.text()]
     self.prevSong = song
