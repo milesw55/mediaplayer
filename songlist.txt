@@ -1,4 +1,0 @@
-/home/mwentworth/ece2524/final/rapgod.wav
-/home/mwentworth/ece2524/final/two22.wav
-/home/mwentworth/ece2524/final/sabotage.wav
-/home/mwentworth/ece2524/final/setsail.wav
