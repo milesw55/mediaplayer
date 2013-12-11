@@ -16,6 +16,7 @@ class MusicWidget(QtGui.QWidget):
     addSongButton.clicked.connect(self.addSong)
     mainLayout.addWidget(addSongButton)
     self.songList = QtGui.QListWidget()
+    self.songList.itemDoubleClicked.connect(self.onItemDoubleClicked)
     content = ""
     self.names = {}
     with open("songlist.txt", 'r') as f:
@@ -47,6 +48,15 @@ class MusicWidget(QtGui.QWidget):
     self.names[os.path.basename(fileName)] = filename
     self.songList.addItem(os.path.basename(fileName))
   
+  ##
+  #
+  def onItemDoubleClicked(self, item):
+    song = self.names[item.text()]
+    self.prevSong = song
+    pygame.mixer.music.load(song)
+    self.started = True
+    pygame.mixer.music.play()
+
   ##
   #  This function will act as a slot to the 'play button'
   #  being triggered.
