@@ -44,6 +44,8 @@ class MusicWidget(QtGui.QWidget):
     self.songList.itemDoubleClicked.connect(self.onItemDoubleClicked)
     content = ""
     self.names = {}
+    with open("songlist.txt", 'a') as f:
+      print("songlist.txt does exist\ncontinuing with initialization")
     with open("songlist.txt", 'r') as f:
       content = f.read()
     for song in content.split('\n'):
