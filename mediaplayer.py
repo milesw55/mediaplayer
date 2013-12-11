@@ -28,6 +28,7 @@ class MusicWidget(QtGui.QWidget):
     leftLayout = QtGui.QVBoxLayout()
     self.rightLayout = QtGui.QVBoxLayout()
     self.addSongButton = QtGui.QPushButton("Add song")
+    self.addSongButton.setStyleSheet("QLabel { background: black; color: white; }")
     self.addSongButton.clicked.connect(self.addSong)
     self.findSongButton = QtGui.QPushButton("Find song")
     self.findSongButton.clicked.connect(self.findSong)
