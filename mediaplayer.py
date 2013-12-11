@@ -11,10 +11,15 @@ class MusicWidget(QtGui.QWidget):
   #  Main initializer function.
   def __init__(self):
     super(MusicWidget, self).__init__()
-    mainLayout = QtGui.QVBoxLayout(self)
+    self.setWindowTitle("WAV Player")
+    mainLayout = QtGui.QHBoxLayout(self)
+    leftLayout = QtGui.QVBoxLayout()
+    rightLayout = QtGui.QVBoxLayout()
     addSongButton = QtGui.QPushButton("Add song")
     addSongButton.clicked.connect(self.addSong)
-    mainLayout.addWidget(addSongButton)
+    rightLayout.addWidget(addSongButton)
+    groupbox = QtGui.QGroupBox("Your songs:")
+    gboxLayout = QtGui.QVBoxLayout()
     self.songList = QtGui.QListWidget()
     self.songList.itemDoubleClicked.connect(self.onItemDoubleClicked)
     content = ""
@@ -25,7 +30,9 @@ class MusicWidget(QtGui.QWidget):
       if song != "":
         self.names[os.path.basename(song)] = song
         self.songList.addItem(os.path.basename(song))
-    mainLayout.addWidget(self.songList)
+    gboxLayout.addWidget(self.songList)
+    groupbox.setLayout(gboxLayout)
+    leftLayout.addWidget(groupbox)
     buttonLayout = QtGui.QHBoxLayout()
     self.playButton = QtGui.QPushButton("Play")
     self.playButton.clicked.connect(self.playTriggered)
@@ -33,7 +40,9 @@ class MusicWidget(QtGui.QWidget):
     pauseButton = QtGui.QPushButton("Pause")
     pauseButton.clicked.connect(self.pauseTriggered)
     buttonLayout.addWidget(pauseButton)
-    mainLayout.addLayout(buttonLayout)
+    leftLayout.addLayout(buttonLayout)
+    mainLayout.addLayout(leftLayout)
+    mainLayout.addLayout(rightLayout)
     self.started = False
     pygame.mixer.init()
     self.prevSong = None
