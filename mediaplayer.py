@@ -1,4 +1,4 @@
-
+#! /usr/bin/env python
 import pygame
 import os, sys
 from PySide import QtGui, QtCore
