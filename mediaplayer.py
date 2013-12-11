@@ -28,10 +28,10 @@ class MusicWidget(QtGui.QWidget):
     leftLayout = QtGui.QVBoxLayout()
     self.rightLayout = QtGui.QVBoxLayout()
     self.addSongButton = QtGui.QPushButton("Add song")
-    self.addSongButton.setStyleSheet("QPushButton { background: black; color: white; }")
+    self.addSongButton.setStyleSheet("QPushButton { background: maroon; color: white; }")
     self.addSongButton.clicked.connect(self.addSong)
     self.findSongButton = QtGui.QPushButton("Find song")
-    self.findSongButton.setStyleSheet("QPushButton { background: black; color: white; }");
+    self.findSongButton.setStyleSheet("QPushButton { background: maroon; color: white; }");
     self.findSongButton.clicked.connect(self.findSong)
     self.findSongGroup = QtGui.QGroupBox("Find song:")
     self.songButtonLayout = QtGui.QHBoxLayout()
@@ -55,9 +55,11 @@ class MusicWidget(QtGui.QWidget):
     leftLayout.addWidget(groupbox)
     buttonLayout = QtGui.QHBoxLayout()
     self.playButton = QtGui.QPushButton("Play")
+    self.playButton.setStyleSheet("QPushButton { background: orange; color: white; }");
     self.playButton.clicked.connect(self.playTriggered)
     buttonLayout.addWidget(self.playButton)
     pauseButton = QtGui.QPushButton("Pause")
+    pauseButton.setStyleSheet("QPushButton { background: orange; color: white; }");
     pauseButton.clicked.connect(self.pauseTriggered)
     buttonLayout.addWidget(pauseButton)
     leftLayout.addLayout(buttonLayout)
