@@ -19,3 +19,18 @@ of file paths for the list of songs. This will be
 read from and written to on every startup of the
 program and every time a song is added to the GUI's
 list.
+
+In addition to the music features, there will
+be an option for downloading music from youtube.
+
+Required packages:
+    Python 2.7
+      -sudo yum install python
+    pyside
+      -sudo yum install pyside
+    pygame
+      -sudo yum install pygame
+    youtube-dl
+      -sudo yum install youtube-dl
+    ffmpeg
+      -sudo yum install ffmpeg

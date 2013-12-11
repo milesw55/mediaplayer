@@ -1,4 +1,15 @@
 #! /usr/bin/env python
+#  This is a unique media player that allows the user to
+#  download youtube videos on the fly.
+#
+#  Requirements:
+#    Python 2.7
+#    PySide
+#    pygame
+#    youtube-dl (unix package)
+#    ffmpeg (unix package)
+#
+#  @authors milesw55, ntreado
 import pygame
 import os, sys
 import subprocess
