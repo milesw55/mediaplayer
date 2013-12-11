@@ -31,6 +31,7 @@ class MusicWidget(QtGui.QWidget):
     self.addSongButton.setStyleSheet("QPushButton { background: black; color: white; }")
     self.addSongButton.clicked.connect(self.addSong)
     self.findSongButton = QtGui.QPushButton("Find song")
+    self.findSongButton.setStyleSheet("QPushButton { background: black; color: white; }");
     self.findSongButton.clicked.connect(self.findSong)
     self.findSongGroup = QtGui.QGroupBox("Find song:")
     self.songButtonLayout = QtGui.QHBoxLayout()

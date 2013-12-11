@@ -26,11 +26,16 @@ be an option for downloading music from youtube.
 Required packages:
     Python 2.7
       -sudo yum install python
+      -sudo apt-get install python
     pyside
       -sudo yum install pyside
+      -sudo apt-get install python-pyside
     pygame
       -sudo yum install pygame
+      -sudo apt-get install python-pyside
     youtube-dl
       -sudo yum install youtube-dl
+      -sudo apt-get install youtube-dl
     ffmpeg
       -sudo yum install ffmpeg
+      -sudo apt-get install ffmpeg
