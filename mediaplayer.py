@@ -107,6 +107,7 @@ class MusicWidget(QtGui.QWidget):
   def onAddClicked(self):
     subprocess.call(['youtube-dl', '-o', "{}.mp4".format(self.nameLine.text()), self.urlLine.text()])
     subprocess.call(['ffmpeg', '-i', "{}.mp4".format(self.nameLine.text()), "{}.wav".format(self.nameLine.text())])
+    subprocess.call(['rm', "{}.mp4".format(self.nameLine.text())])
     with open("songlist.txt", 'a') as f:
       f.write(os.getcwd()+ "/" + "{}.wav".format(self.nameLine.text()) + "\n")
     self.names["{}.wav".format(self.nameLine.text())] = os.getcwd() + "/{}.wav".format(self.nameLine.text())
