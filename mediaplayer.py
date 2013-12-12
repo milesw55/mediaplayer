@@ -23,7 +23,7 @@ class MusicWidget(QtGui.QWidget):
   #  Main initializer function.
   def __init__(self):
     super(MusicWidget, self).__init__()
-    self.setWindowTitle("WAV Player")
+    self.setWindowTitle("Media Player")
     mainLayout = QtGui.QHBoxLayout(self)
     leftLayout = QtGui.QVBoxLayout()
     self.rightLayout = QtGui.QVBoxLayout()
@@ -73,7 +73,7 @@ class MusicWidget(QtGui.QWidget):
   #  This function will act as a slot to the 'add song'
   #  button being triggered.
   def addSong(self):
-    fileName, fileType = QtGui.QFileDialog.getOpenFileName(self, "Add song", os.getcwd(), "WAV Files (*.wav)")
+    fileName, fileType = QtGui.QFileDialog.getOpenFileName(self, "Add song", os.getcwd(), "Audio Files (*.mp3 *.wav)")
     with open("songlist.txt", 'a') as f:
       f.write(fileName + '\n')
     self.names[os.path.basename(fileName)] = fileName
@@ -91,7 +91,7 @@ class MusicWidget(QtGui.QWidget):
     nameLayout = QtGui.QHBoxLayout()
     nameLabel = QtGui.QLabel("Name of song:")
     self.nameLine = QtGui.QLineEdit()
-    nameEnd = QtGui.QLabel(".wav")
+    nameEnd = QtGui.QLabel(".mp3")
     nameLayout.addWidget(nameLabel)
     nameLayout.addWidget(self.nameLine)
     nameLayout.addWidget(nameEnd)
@@ -106,12 +106,12 @@ class MusicWidget(QtGui.QWidget):
   #  This will be triggered when the addButton is clicked.
   def onAddClicked(self):
     subprocess.call(['youtube-dl', '-o', "{}.mp4".format(self.nameLine.text()), self.urlLine.text()])
-    subprocess.call(['ffmpeg', '-i', "{}.mp4".format(self.nameLine.text()), "{}.wav".format(self.nameLine.text())])
+    subprocess.call(['ffmpeg', '-i', "{}.mp4".format(self.nameLine.text()), "{}.mp3".format(self.nameLine.text())])
     subprocess.call(['rm', "{}.mp4".format(self.nameLine.text())])
     with open("songlist.txt", 'a') as f:
-      f.write(os.getcwd()+ "/" + "{}.wav".format(self.nameLine.text()) + "\n")
-    self.names["{}.wav".format(self.nameLine.text())] = os.getcwd() + "/{}.wav".format(self.nameLine.text())
-    self.songList.addItem("{}.wav".format(self.nameLine.text()))
+      f.write(os.getcwd()+ "/" + "{}.mp3".format(self.nameLine.text()) + "\n")
+    self.names["{}.mp3".format(self.nameLine.text())] = os.getcwd() + "/{}.mp3".format(self.nameLine.text())
+    self.songList.addItem("{}.mp3".format(self.nameLine.text()))
 
   ##
   #  This is triggered when an item in the list is double clicked. A song will play.
