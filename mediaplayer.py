@@ -23,6 +23,7 @@ class MusicWidget(QtGui.QWidget):
   #  Main initializer function.
   def __init__(self):
     super(MusicWidget, self).__init__()
+    self.addLayoutInitialized = False
     self.setWindowTitle("Media Player")
     mainLayout = QtGui.QHBoxLayout(self)
     leftLayout = QtGui.QVBoxLayout()
@@ -82,36 +83,48 @@ class MusicWidget(QtGui.QWidget):
   ##
   #  This will act as a slot for the 'find song' button being clicked.
   def findSong(self):
-    groupLayout = QtGui.QVBoxLayout(self.findSongGroup)
-    urlLayout = QtGui.QHBoxLayout()
-    urlLabel = QtGui.QLabel("URL:")
-    self.urlLine = QtGui.QLineEdit()
-    urlLayout.addWidget(urlLabel)
-    urlLayout.addWidget(self.urlLine)
-    nameLayout = QtGui.QHBoxLayout()
-    nameLabel = QtGui.QLabel("Name of song:")
-    self.nameLine = QtGui.QLineEdit()
-    nameEnd = QtGui.QLabel(".mp3")
-    nameLayout.addWidget(nameLabel)
-    nameLayout.addWidget(self.nameLine)
-    nameLayout.addWidget(nameEnd)
-    self.addButton = QtGui.QPushButton("Add")
-    self.addButton.clicked.connect(self.onAddClicked)
-    groupLayout.addLayout(urlLayout)
-    groupLayout.addLayout(nameLayout)
-    groupLayout.addWidget(self.addButton)
-    self.rightLayout.addWidget(self.findSongGroup)
+    if not self.addLayoutInitialized:
+      groupLayout = QtGui.QVBoxLayout(self.findSongGroup)
+      urlLayout = QtGui.QHBoxLayout()
+      urlLabel = QtGui.QLabel("URL:")
+      self.urlLine = QtGui.QLineEdit()
+      urlLayout.addWidget(urlLabel)
+      urlLayout.addWidget(self.urlLine)
+      nameLayout = QtGui.QHBoxLayout()
+      nameLabel = QtGui.QLabel("Name of song:")
+      self.nameLine = QtGui.QLineEdit()
+      self.nameEnd = QtGui.QComboBox()
+      self.nameEnd.addItem(".mp3")
+      self.nameEnd.addItem(".wav")
+      nameLayout.addWidget(nameLabel)
+      nameLayout.addWidget(self.nameLine)
+      nameLayout.addWidget(self.nameEnd)
+      self.addButton = QtGui.QPushButton("Add")
+      self.addButton.clicked.connect(self.onAddClicked)
+      groupLayout.addLayout(urlLayout)
+      groupLayout.addLayout(nameLayout)
+      groupLayout.addWidget(self.addButton)
+      self.rightLayout.addWidget(self.findSongGroup)
+      self.addLayoutInitialized = True
+    else:
+      if self.findSongGroup.isVisible():
+        self.findSongGroup.hide()
+      else:
+        self.findSongGroup.show()
     
   ##
   #  This will be triggered when the addButton is clicked.
   def onAddClicked(self):
-    subprocess.call(['youtube-dl', '-o', "{}.mp4".format(self.nameLine.text()), self.urlLine.text()])
-    subprocess.call(['ffmpeg', '-i', "{}.mp4".format(self.nameLine.text()), "{}.mp3".format(self.nameLine.text())])
-    subprocess.call(['rm', "{}.mp4".format(self.nameLine.text())])
+    mp4 = "{}.mp4".format(self.nameLine.text())
+    audioFile = "{}{}".format(self.nameLine.text(), self.nameEnd.currentText())
+    subprocess.call(['youtube-dl', '-o', mp4, self.urlLine.text()])
+    subprocess.call(['ffmpeg', '-i', mp4, audioFile])
+    subprocess.call(['rm', mp4])
     with open("songlist.txt", 'a') as f:
-      f.write(os.getcwd()+ "/" + "{}.mp3".format(self.nameLine.text()) + "\n")
-    self.names["{}.mp3".format(self.nameLine.text())] = os.getcwd() + "/{}.mp3".format(self.nameLine.text())
-    self.songList.addItem("{}.mp3".format(self.nameLine.text()))
+      f.write(os.getcwd()+ "/" + audioFile + "\n")
+    self.names[audioFile] = os.getcwd() + "/{}".format(audioFile)
+    self.songList.addItem(audioFile)
+    self.findSongGroup.hide()
 
   ##
   #  This is triggered when an item in the list is double clicked. A song will play.
