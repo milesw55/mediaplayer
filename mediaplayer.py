@@ -116,14 +116,17 @@ class MusicWidget(QtGui.QWidget):
   #  This will be triggered when the addButton is clicked.
   def onAddClicked(self):
     mp4 = "{}.mp4".format(self.nameLine.text())
-    audioFile = "{}{}".format(self.nameLine.text(), self.nameEnd.currentText())
+    if not os.path.isdir(os.path.join(os.getcwd(), "downloads")):
+      os.makedirs(os.path.join(os.getcwd(), "downloads"))
+    audioFile = "/downloads/{}{}".format(self.nameLine.text(), self.nameEnd.currentText())
+    audioName = "{}{}".format(self.nameLine.text(), self.nameEnd.currentText())
     subprocess.call(['youtube-dl', '-o', mp4, self.urlLine.text()])
-    subprocess.call(['ffmpeg', '-i', mp4, audioFile])
+    subprocess.call(['ffmpeg', '-i', mp4, ".{}".format(audioFile)])
     subprocess.call(['rm', mp4])
     with open("songlist.txt", 'a') as f:
-      f.write(os.getcwd()+ "/" + audioFile + "\n")
-    self.names[audioFile] = os.getcwd() + "/{}".format(audioFile)
-    self.songList.addItem(audioFile)
+      f.write(os.getcwd()+ audioFile + "\n")
+    self.names[audioName] = os.getcwd() + "{}".format(audioFile)
+    self.songList.addItem(audioName)
     self.findSongGroup.hide()
 
   ##
