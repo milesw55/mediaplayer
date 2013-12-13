@@ -43,5 +43,6 @@ Required packages:
       -sudo yum install ffmpeg
       -sudo apt-get install ffmpeg
     restricted-extras (so ubuntu can play mp3)
-      -(not needed for Fedora)
+      -(Fedora + pygame + mp3 = fail), please use .wav when downloading
+          songs from youtube.
       -sudo apt-get install ubuntu-restricted-extras 
