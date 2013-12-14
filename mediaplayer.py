@@ -13,6 +13,7 @@
 import pygame
 import os, sys
 import subprocess
+from src.gui.style import style
 from PySide import QtGui, QtCore
 
 ##
@@ -29,12 +30,14 @@ class MusicWidget(QtGui.QWidget):
     leftLayout = QtGui.QVBoxLayout()
     self.rightLayout = QtGui.QVBoxLayout()
     self.addSongButton = QtGui.QPushButton("Add song")
-    self.addSongButton.setStyleSheet("QPushButton { background: black; color: white; }")
+    self.addSongButton.setObjectName("addSong")
+    self.addSongButton.setStyleSheet(style.button("addSong"))
     self.addSongButton.clicked.connect(self.addSong)
-    self.findSongButton = QtGui.QPushButton("Find song")
-    self.findSongButton.setStyleSheet("QPushButton { background: black; color: white; }");
+    self.findSongButton = QtGui.QPushButton("Get song")
+    self.findSongButton.setObjectName("getSong")
+    self.findSongButton.setStyleSheet(style.button("getSong"))
     self.findSongButton.clicked.connect(self.findSong)
-    self.findSongGroup = QtGui.QGroupBox("Find song:")
+    self.findSongGroup = QtGui.QGroupBox("Get song:")
     self.songButtonLayout = QtGui.QHBoxLayout()
     self.songButtonLayout.addWidget(self.addSongButton)
     self.songButtonLayout.addWidget(self.findSongButton)
@@ -58,9 +61,13 @@ class MusicWidget(QtGui.QWidget):
     leftLayout.addWidget(groupbox)
     buttonLayout = QtGui.QHBoxLayout()
     self.playButton = QtGui.QPushButton("Play")
+    self.playButton.setObjectName("playButton")
+    self.playButton.setStyleSheet(style.button("playButton"))
     self.playButton.clicked.connect(self.playTriggered)
     buttonLayout.addWidget(self.playButton)
     pauseButton = QtGui.QPushButton("Pause")
+    pauseButton.setObjectName("pauseButton")
+    pauseButton.setStyleSheet(style.button("pauseButton"))
     pauseButton.clicked.connect(self.pauseTriggered)
     buttonLayout.addWidget(pauseButton)
     leftLayout.addLayout(buttonLayout)
