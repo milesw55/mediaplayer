@@ -23,6 +23,9 @@ list.
 In addition to the music features, there will
 be an option for downloading music from youtube.
 
+Supported Music File types:
+    *.wav *.mp3
+
 Required packages:
     Python 2.7
       -sudo yum install python
@@ -39,3 +42,7 @@ Required packages:
     ffmpeg
       -sudo yum install ffmpeg
       -sudo apt-get install ffmpeg
+    restricted-extras (so ubuntu can play mp3)
+      -(Fedora + pygame + mp3 = fail), please use .wav when downloading
+          songs from youtube.
+      -sudo apt-get install ubuntu-restricted-extras 
