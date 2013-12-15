@@ -31,3 +31,18 @@ def button(name):
   max-width: 80px;
 }"""
   return ret
+
+## GROUP BOX
+
+GROUP_BOX = """#urlGroup {
+  border: 4px solid black;
+  border-radius: 5px;
+  background-color: #AAA;
+}"""
+
+## SPLITTER
+
+SPLITTER = """#splitter:handle {
+  background-color: transparent;
+}
+"""
