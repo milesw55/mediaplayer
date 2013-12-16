@@ -13,6 +13,7 @@
 import pygame
 import os, sys
 import subprocess
+import re
 from style import style
 from PySide import QtGui, QtCore
 
@@ -25,16 +26,41 @@ class DownloadWidget(QtCore.QObject):
   songAdded = QtCore.Signal(str)
 
   ##
+  #  Error occurred.
+  error = QtCore.Signal(str)
+
+  ##
   #  Main initializer funciton.
   def __init__(self):
     super(DownloadWidget, self).__init__()
 
   def download(self, url, mp4, name):
+    if not re.match("\w+", name):
+      self.error.emit("Invalid name for saving song.")
+      return
     audioFile = "/downloads/{}".format(name)
-    subprocess.call(['youtube-dl', '-o', mp4, url])
-    subprocess.call(['ffmpeg', '-i', mp4, ".{}".format(audioFile)])
+    ret = subprocess.call(['youtube-dl', '-o', mp4, url])
+    if (ret != 0):
+      self.error.emit("Error downloading. URL may be invalid or copyrighted.")
+      return
+    ret = subprocess.call(['ffmpeg', '-i', mp4, ".{}".format(audioFile)])
+    if (ret != 0):
+      self.error.emit("Error ripping audio.")
+      subprocess.call(['rm', mp4])
+      return
     subprocess.call(['rm', mp4])
     self.songAdded.emit(audioFile)
+
+
+##
+#  Standard Font.
+class StandardFont(QtGui.QFont):
+  ##
+  #  Main initializer function.
+  def __init__(self):
+    super(StandardFont, self).__init__()
+    self.setFamily("SansSerif")
+    self.setPointSize(10)
 
 ##
 #  This class will hold the essential UI elements of the
@@ -58,9 +84,11 @@ class URLDownloadingGroup(QtGui.QGroupBox):
 
     rightGroupLayout = QtGui.QVBoxLayout(self)
 
-    directionLabel = QtGui.QLabel("""You can add songs locally by clicking 'Add Local'.
-Alternatively, you can enter a video URL such as YouTube and grab the audio from that.
-Please note that copyrighted videos will not work. Enjoy.""")
+    directionLabel = QtGui.QLabel("You can add songs locally by clicking 'Add Local'." +
+" Alternatively, you can enter a video URL such as one from YouTube and click 'Add URL' to save the audio from that video to your library." +
+" Please note that copyrighted videos will not work. Enjoy.")
+    directionLabel.setFont(StandardFont())
+    directionLabel.setWordWrap(True)
     rightGroupLayout.addWidget(directionLabel)
 
     self.findSongGroup = QtGui.QGroupBox()
@@ -73,18 +101,23 @@ Please note that copyrighted videos will not work. Enjoy.""")
 
     urlLayout = QtGui.QHBoxLayout()
     urlLabel = QtGui.QLabel("URL:")
+    urlLabel.setFont(StandardFont())
     self.urlLine = QtGui.QLineEdit()
     self.urlLine.setStyleSheet("QLineEdit { background-color: #FFF; }")
-    urlLayout.addSpacing(24)
+    self.urlLine.setFont(StandardFont())
+    urlLayout.addSpacing(27)
     urlLayout.addWidget(urlLabel)
     urlLayout.addWidget(self.urlLine)
-    urlLayout.addSpacing(63)
+    urlLayout.addSpacing(69)
 
     nameLayout = QtGui.QHBoxLayout()
     nameLabel = QtGui.QLabel("Save As:")
+    nameLabel.setFont(StandardFont())
     self.nameLine = QtGui.QLineEdit()
     self.nameLine.setStyleSheet("QLineEdit { background-color: #FFF; }")
+    self.nameLine.setFont(StandardFont())
     self.nameEnd = QtGui.QComboBox()
+    self.nameEnd.setFont(StandardFont())
     self.nameEnd.addItem(".mp3")
     self.nameEnd.addItem(".wav")
     nameLayout.addWidget(nameLabel)
@@ -95,16 +128,24 @@ Please note that copyrighted videos will not work. Enjoy.""")
     groupLayout.addLayout(nameLayout)
 
     self.songButtonLayout = QtGui.QHBoxLayout()
+    
+    self.statusLabel = QtGui.QLabel()
+    self.statusLabel.setObjectName("status")
+    self.statusLabel.setFont(StandardFont())
+    self.songButtonLayout.addWidget(self.statusLabel)
 
     self.addSongButton = QtGui.QPushButton("Add Local")
     self.addSongButton.setObjectName("addSong")
     self.addSongButton.setStyleSheet(style.button("addSong"))
+    self.addSongButton.setFont(StandardFont())
     self.addSongButton.clicked.connect(self.addSong)
+    self.songButtonLayout.addStretch(0)
     self.songButtonLayout.addWidget(self.addSongButton)
 
     self.addButton = QtGui.QPushButton("Add URL")
     self.addButton.setObjectName("addButton")
     self.addButton.setStyleSheet(style.button("addButton"))
+    self.addButton.setFont(StandardFont())
     self.addButton.clicked.connect(self.onAddClicked)
     self.songButtonLayout.addWidget(self.addButton)
 
@@ -129,11 +170,14 @@ Please note that copyrighted videos will not work. Enjoy.""")
     url = self.urlLine.text()
     self.worker = DownloadWidget()
     self.worker.songAdded.connect(self.onAudioFileAdded)
+    self.worker.error.connect(self.onError)
     self.thread = QtCore.QThread()
     self.worker.moveToThread(self.thread)
     self.downloadRequest.connect(self.worker.download)
     self.thread.start()
     self.addButton.setEnabled(False)
+    self.statusLabel.setStyleSheet("#status { color: black; }")
+    self.statusLabel.setText("Downloading...")
     self.downloadRequest.emit(url, mp4, audioName)
 
   ##
@@ -143,7 +187,15 @@ Please note that copyrighted videos will not work. Enjoy.""")
     with open("songlist.txt", 'a') as f:
       f.write(fileName + "\n")
     self.addButton.setEnabled(True)
+    self.statusLabel.setText("Download complete.")
     self.songAdded.emit(fileName)
+
+  ##
+  #  Display error.
+  def onError(self, error):
+    self.statusLabel.setStyleSheet("#status { color: red; }")
+    self.statusLabel.setText(error)
+    self.addButton.setEnabled(True)
 
 ##
 #  This is the main widget that will parent
@@ -181,9 +233,13 @@ class MusicWidget(QtGui.QWidget):
     mainLayout.addWidget(self.splitter)
 
     groupbox = QtGui.QGroupBox("Your songs:")
+    groupbox.setFont(StandardFont())
     gboxLayout = QtGui.QVBoxLayout()
 
     self.songList = QtGui.QListWidget()
+    self.songList.setObjectName("listWidget")
+    self.songList.setFont(StandardFont())
+    self.songList.setStyleSheet(style.LIST_WIDGET)
     self.songList.itemDoubleClicked.connect(self.onItemDoubleClicked)
 
     content = ""
@@ -205,12 +261,14 @@ class MusicWidget(QtGui.QWidget):
     self.playButton = QtGui.QPushButton("Play")
     self.playButton.setObjectName("playButton")
     self.playButton.setStyleSheet(style.button("playButton"))
+    self.playButton.setFont(StandardFont())
     self.playButton.clicked.connect(self.playTriggered)
     buttonLayout.addWidget(self.playButton)
 
     pauseButton = QtGui.QPushButton("Pause")
     pauseButton.setObjectName("pauseButton")
     pauseButton.setStyleSheet(style.button("pauseButton"))
+    pauseButton.setFont(StandardFont())
     pauseButton.clicked.connect(self.pauseTriggered)
     buttonLayout.addWidget(pauseButton)
 

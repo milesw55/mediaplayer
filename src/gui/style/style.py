@@ -29,7 +29,17 @@ def button(name):
   border-radius: 3px;
   min-width: 80px;
   max-width: 80px;
+}
+
+#""" + name + """:disabled {
+  color: #333;
+  border: 2px solid #444;
+  background: #666;
+  border-radius: 3px;
+  min-width: 80px;
+  max-width: 80px;
 }"""
+
   return ret
 
 ## GROUP BOX
@@ -44,5 +54,13 @@ GROUP_BOX = """#urlGroup {
 
 SPLITTER = """#splitter:handle {
   background-color: transparent;
+}
+"""
+
+## LIST WIDGET
+
+LIST_WIDGET = """#listWidget:item:selected {
+  color: black;
+  background-color: #00d0d4;
 }
 """
