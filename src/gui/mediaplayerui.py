@@ -120,7 +120,7 @@ class URLDownloadingGroup(QtGui.QGroupBox):
     urlLayout.addSpacing(27)
     urlLayout.addWidget(urlLabel)
     urlLayout.addWidget(self.urlLine)
-    urlLayout.addSpacing(69)
+    urlLayout.addSpacing(65)
 
     nameLayout = QtGui.QHBoxLayout()
     nameLabel = QtGui.QLabel("Save As:")
@@ -130,6 +130,8 @@ class URLDownloadingGroup(QtGui.QGroupBox):
     self.nameLine.setFont(StandardFont())
     self.nameEnd = QtGui.QComboBox()
     self.nameEnd.setFont(StandardFont())
+    self.nameEnd.setObjectName("fileType")
+    self.nameEnd.setStyleSheet(style.COMBO_BOX)
     self.nameEnd.addItem(".ogg")
     self.nameEnd.addItem(".mp3")
     self.nameEnd.addItem(".wav")

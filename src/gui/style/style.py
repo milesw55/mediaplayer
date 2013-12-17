@@ -79,6 +79,18 @@ def multimediaButton(name):
 }"""
   return ret
 
+## COMBO BOX
+
+COMBO_BOX = """#fileType {
+  color: #00d0d4;
+  background: #fff;
+  border: 2px solid #444;
+  border-radius: 3px;
+  min-width: 55px;
+  max-width: 55px;
+}
+"""
+
 ## GROUP BOX
 
 GROUP_BOX = """#urlGroup {
