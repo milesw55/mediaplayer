@@ -41,6 +41,44 @@ def button(name):
 }"""
   return ret
 
+def multimediaButton(name):
+  ret = "#" + name + """ {
+  color: #00d0d4;
+  border: 2px solid #444;
+  background: #111;
+  border-radius: 10px;
+  min-width: 40px;
+  max-width: 40px;
+}
+
+#""" + name + """:hover {
+  color: #00d0d4;
+  border: 2px solid #444;
+  background: #333;
+  border-radius: 10px;
+  min-width: 40px;
+  max-width: 40px;
+}
+
+#""" + name + """:pressed {
+  color: #00d0d4;
+  border: 2px solid #444;
+  background: #000;
+  border-radius: 10px;
+  min-width: 40px;
+  max-width: 40px;
+}
+
+#""" + name + """:disabled {
+  color: #333;
+  border: 2px solid #444;
+  background: #666;
+  border-radius: 10px;
+  min-width: 40px;
+  max-width: 40px;
+}"""
+  return ret
+
 ## GROUP BOX
 
 GROUP_BOX = """#urlGroup {
