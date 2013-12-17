@@ -23,7 +23,7 @@ list.
 In addition to the music features, there will
 be an option for downloading music from youtube.
 
-Supported Music File types: `wav`, `mp3`
+Supported Music File types: `wav`, `mp3`, `ogg`
 
 Required packages:
 
