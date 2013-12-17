@@ -43,7 +43,19 @@ class DownloadWidget(QtCore.QObject):
     if (ret != 0):
       self.error.emit("Error downloading. URL may be invalid or copyrighted.")
       return
-    ret = subprocess.call(['ffmpeg', '-i', mp4, ".{}".format(audioFile)])
+    command = ['ffmpeg', '-i', mp4]
+    if audioFile.endswith("ogg"):
+      command.append('-acodec')
+      command.append('vorbis')
+      command.append('-aq')
+      command.append('60')
+      command.append('-vn')
+      command.append('-ac')
+      command.append('2')
+      command.append('-strict')
+      command.append('-2')
+    command.append(".{}".format(audioFile))
+    ret = subprocess.call(command)
     if (ret != 0):
       self.error.emit("Error ripping audio.")
       subprocess.call(['rm', mp4])
@@ -118,6 +130,7 @@ class URLDownloadingGroup(QtGui.QGroupBox):
     self.nameLine.setFont(StandardFont())
     self.nameEnd = QtGui.QComboBox()
     self.nameEnd.setFont(StandardFont())
+    self.nameEnd.addItem(".ogg")
     self.nameEnd.addItem(".mp3")
     self.nameEnd.addItem(".wav")
     nameLayout.addWidget(nameLabel)
@@ -155,7 +168,7 @@ class URLDownloadingGroup(QtGui.QGroupBox):
   #  This function will act as a slot to the 'add song'
   #  button being triggered.
   def addSong(self):
-    fileName, fileType = QtGui.QFileDialog.getOpenFileName(self, "Add song", os.getcwd(), "Audio Files (*.mp3 *.wav)")
+    fileName, fileType = QtGui.QFileDialog.getOpenFileName(self, "Add song", os.getcwd(), "Audio Files (*.ogg *.mp3 *.wav)")
     with open("songlist.txt", 'a') as f:
       f.write(fileName + '\n')
     self.songAdded.emit(fileName)
