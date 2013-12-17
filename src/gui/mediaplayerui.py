@@ -161,6 +161,7 @@ class URLDownloadingGroup(QtGui.QGroupBox):
     self.addButton.setFont(StandardFont())
     self.addButton.clicked.connect(self.onAddClicked)
     self.songButtonLayout.addWidget(self.addButton)
+    self.thread = None
 
     rightGroupLayout.addLayout(self.songButtonLayout)
 
@@ -172,6 +173,11 @@ class URLDownloadingGroup(QtGui.QGroupBox):
     with open("songlist.txt", 'a') as f:
       f.write(fileName + '\n')
     self.songAdded.emit(fileName)
+
+  ##
+  #  Handles the close aciton.
+  def close(self):
+    self.thread.quit()
     
   ##
   #  This will be triggered when the addButton is clicked.
@@ -184,6 +190,8 @@ class URLDownloadingGroup(QtGui.QGroupBox):
     self.worker = DownloadWidget()
     self.worker.songAdded.connect(self.onAudioFileAdded)
     self.worker.error.connect(self.onError)
+    if self.thread is not None:
+      self.thread.quit()
     self.thread = QtCore.QThread()
     self.worker.moveToThread(self.thread)
     self.downloadRequest.connect(self.worker.download)
@@ -323,4 +331,26 @@ class MusicWidget(QtGui.QWidget):
   #  being triggered.
   def pauseTriggered(self):
     pygame.mixer.music.pause()
+
+##
+#  This is the main window.
+class mainwindow(QtGui.QMainWindow):
+  ##
+  #  Main intializer.
+  def __init__(self):
+    super(mainwindow, self).__init__()
+    self.setObjectName("mainWindow")
+    self.setStyleSheet(style.MAIN_WINDOW)
+    exitAction = QtGui.QAction(QtGui.QIcon('exit.png'), '&Exit', self)
+    exitAction.setShortcut('Ctrl+Q')
+    exitAction.setStatusTip('Exit application')
+    exitAction.triggered.connect(self.close)
+
+    self.statusBar()
+
+    menubar = self.menuBar()
+    fileMenu = menubar.addMenu('&File')
+    fileMenu.addAction(exitAction)
+    self.musicWidget = MusicWidget()
+    self.setCentralWidget(self.musicWidget)
 

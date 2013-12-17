@@ -39,7 +39,6 @@ def button(name):
   min-width: 80px;
   max-width: 80px;
 }"""
-
   return ret
 
 ## GROUP BOX
@@ -50,13 +49,6 @@ GROUP_BOX = """#urlGroup {
   background-color: #AAA;
 }"""
 
-## SPLITTER
-
-SPLITTER = """#splitter:handle {
-  background-color: transparent;
-}
-"""
-
 ## LIST WIDGET
 
 LIST_WIDGET = """#listWidget:item:selected {
@@ -64,3 +56,13 @@ LIST_WIDGET = """#listWidget:item:selected {
   background-color: #00d0d4;
 }
 """
+
+## SPLITTER
+
+SPLITTER = """#splitter:handle {
+  background-color: transparent;
+}
+"""
+
+## MAIN WINDOW
+MAIN_WINDOW = """#mainWindow { background: qlineargradient(x0: 1, y0: 1, x1: 0, y1: 1, stop: 1 #00d0d4, stop: 0.7 #FFF, stop: 0.3 #FFF, stop: 0 #000); }"""

@@ -18,6 +18,6 @@ from src.gui import mediaplayerui
 
 if __name__ == "__main__":
   app = QtGui.QApplication(sys.argv)
-  musicWidget = mediaplayerui.MusicWidget()
-  musicWidget.show()
+  mainWindow = mediaplayerui.mainwindow()
+  mainWindow.show()
   app.exec_()
