@@ -219,6 +219,52 @@ class URLDownloadingGroup(QtGui.QGroupBox):
     self.addButton.setEnabled(True)
 
 ##
+#  The song playing group.
+class SongPlayingGroup(QtGui.QGroupBox):
+  ##
+  #  Main initializer function.
+  def __init__(self, name):
+    super(SongPlayingGroup, self).__init__(name)
+    self.setFont(StandardFont())
+    gboxLayout = QtGui.QVBoxLayout(self)
+
+    self.songList = QtGui.QListWidget()
+    self.songList.setObjectName("listWidget")
+    self.songList.setFont(StandardFont())
+    self.songList.setStyleSheet(style.LIST_WIDGET)
+    self.songList.itemDoubleClicked.connect(self.onItemDoubleClicked)
+
+    content = ""
+    self.names = {}
+    with open("songlist.txt", 'a') as f:
+      print("songlist.txt does exist\ncontinuing with initialization")
+    with open("songlist.txt", 'r') as f:
+      content = f.read()
+    for song in content.split('\n'):
+      if song != "":
+        self.names[os.path.basename(song)] = song
+        self.songList.addItem(os.path.basename(song))
+
+    gboxLayout.addWidget(self.songList)
+    self.setLayout(gboxLayout)
+
+  ##
+  #  This is triggered when an item in the list is double clicked. A song will play.
+  def onItemDoubleClicked(self, item):
+    song = self.names[item.text()]
+    self.prevSong = song
+    pygame.mixer.music.load(song)
+    self.started = True
+    pygame.mixer.music.play()
+
+  ##
+  #  On song added, update the dictionary and list widget.
+  def onSongAdded(self, fileName):
+    self.names[os.path.basename(fileName)] = fileName
+    self.songList.addItem(os.path.basename(fileName))
+
+
+##
 #  This is the main widget that will parent
 #  most of the GUI's features. 
 class MusicWidget(QtGui.QWidget):
@@ -244,8 +290,10 @@ class MusicWidget(QtGui.QWidget):
 
     self.rightWidget = QtGui.QWidget()
     self.rightLayout = QtGui.QVBoxLayout(self.rightWidget)
+    self.groupbox = SongPlayingGroup("Your Songs:")
+    self.rightLayout.addWidget(self.groupbox)
     self.rightGroup = URLDownloadingGroup()
-    self.rightGroup.songAdded.connect(self.onSongAdded)
+    self.rightGroup.songAdded.connect(self.groupbox.onSongAdded)
     self.rightLayout.addWidget(self.rightGroup)
 
     self.splitter.addWidget(leftWidget)
@@ -253,30 +301,6 @@ class MusicWidget(QtGui.QWidget):
 
     mainLayout.addWidget(self.splitter)
 
-    groupbox = QtGui.QGroupBox("Your songs:")
-    groupbox.setFont(StandardFont())
-    gboxLayout = QtGui.QVBoxLayout()
-
-    self.songList = QtGui.QListWidget()
-    self.songList.setObjectName("listWidget")
-    self.songList.setFont(StandardFont())
-    self.songList.setStyleSheet(style.LIST_WIDGET)
-    self.songList.itemDoubleClicked.connect(self.onItemDoubleClicked)
-
-    content = ""
-    self.names = {}
-    with open("songlist.txt", 'a') as f:
-      print("songlist.txt does exist\ncontinuing with initialization")
-    with open("songlist.txt", 'r') as f:
-      content = f.read()
-    for song in content.split('\n'):
-      if song != "":
-        self.names[os.path.basename(song)] = song
-        self.songList.addItem(os.path.basename(song))
-
-    gboxLayout.addWidget(self.songList)
-    groupbox.setLayout(gboxLayout)
-    leftLayout.addWidget(groupbox)
 
     buttonLayout = QtGui.QHBoxLayout()
     self.playButton = QtGui.QPushButton("Play")
@@ -296,25 +320,10 @@ class MusicWidget(QtGui.QWidget):
     leftLayout.addLayout(buttonLayout)
 
   ##
-  #  This is triggered when an item in the list is double clicked. A song will play.
-  def onItemDoubleClicked(self, item):
-    song = self.names[item.text()]
-    self.prevSong = song
-    pygame.mixer.music.load(song)
-    self.started = True
-    pygame.mixer.music.play()
-
-  ##
-  #  On song added, update the dictionary and list widget.
-  def onSongAdded(self, fileName):
-    self.names[os.path.basename(fileName)] = fileName
-    self.songList.addItem(os.path.basename(fileName))
-
-  ##
   #  This function will act as a slot to the 'play button'
   #  being triggered.
   def playTriggered(self):
-    song = self.names[self.songList.currentItem().text()]
+    song = self.groupbox.names[self.groupbox.songList.currentItem().text()]
     if (self.prevSong is None) or (self.prevSong != song):
       self.prevSong = song
       pygame.mixer.music.load(song)
@@ -341,6 +350,7 @@ class mainwindow(QtGui.QMainWindow):
     super(mainwindow, self).__init__()
     self.setObjectName("mainWindow")
     self.setStyleSheet(style.MAIN_WINDOW)
+    self.setGeometry(200, 200, 800, 800)
     exitAction = QtGui.QAction(QtGui.QIcon('exit.png'), '&Exit', self)
     exitAction.setShortcut('Ctrl+Q')
     exitAction.setStatusTip('Exit application')

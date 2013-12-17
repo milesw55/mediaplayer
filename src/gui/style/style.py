@@ -65,4 +65,4 @@ SPLITTER = """#splitter:handle {
 """
 
 ## MAIN WINDOW
-MAIN_WINDOW = """#mainWindow { background: qlineargradient(x0: 1, y0: 1, x1: 0, y1: 1, stop: 1 #00d0d4, stop: 0.7 #FFF, stop: 0.3 #FFF, stop: 0 #000); }"""
+MAIN_WINDOW = """#mainWindow { background: qlineargradient(x0: 1, y0: 1, x1: 0, y1: 1, stop: 1 #00d0d4, stop: 0.8 #FFF, stop: 0.2 #FFF, stop: 0 #000); }"""
