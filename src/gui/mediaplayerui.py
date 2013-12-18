@@ -189,11 +189,11 @@ class URLDownloadingGroup(QtGui.QGroupBox):
       os.makedirs(os.path.join(os.getcwd(), "downloads"))
     audioName = "{}{}".format(self.nameLine.text(), self.nameEnd.currentText())
     url = self.urlLine.text()
+    if self.thread is not None:
+      self.thread.quit()
     self.worker = DownloadWidget()
     self.worker.songAdded.connect(self.onAudioFileAdded)
     self.worker.error.connect(self.onError)
-    if self.thread is not None:
-      self.thread.quit()
     self.thread = QtCore.QThread()
     self.worker.moveToThread(self.thread)
     self.downloadRequest.connect(self.worker.download)
@@ -327,7 +327,9 @@ class MusicWidget(QtGui.QWidget):
   #  being triggered.
   def onPlaying(self):
     self.playButton.setIcon(QtGui.QIcon(os.path.join(os.path.dirname(__file__), "images", "pause.png")))
+    self.prevSong = self.groupbox.names[self.groupbox.songList.currentItem().text()]
     self.playing = True
+    self.started = True
     
 
   ##
@@ -344,6 +346,7 @@ class MusicWidget(QtGui.QWidget):
         self.prevSong = song
         pygame.mixer.music.load(song)
       if self.started == False:
+        self.started = True
         pygame.mixer.music.play()
       elif pygame.mixer.music.get_busy():
         pygame.mixer.music.unpause()
