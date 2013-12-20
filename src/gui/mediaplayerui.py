@@ -287,6 +287,7 @@ class MusicWidget(QtGui.QWidget):
     self.setWindowTitle("Media Player")
     self.setObjectName("musicWidget")
     self.setStyleSheet("#musicWidget { background-color: white; }")
+    self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
     self.started = False
     self.prevSong = None
 
@@ -339,8 +340,13 @@ class MusicWidget(QtGui.QWidget):
   ##
   #  Play next song on finished.
   def onFinished(self):
-    self.prevSong = self.groupbox.songList.itemFromIndex(self.groupbox.songList.currentRow()+1).text()
-    self.groupbox.songList.setCurrentItem(self.prevSong)
+    row = self.groupbox.songList.currentRow() + 1
+    if row >= self.groupbox.songList.count():
+      self.playing = False
+      self.playButton.setIcon(QtGui.QIcon(os.path.join(os.path.dirname(__file__), "images", "play.png")))
+      return
+    self.prevSong = self.groupbox.songList.item(row).text()
+    self.groupbox.songList.setCurrentRow(row)
     self.prevSong = self.groupbox.names[self.prevSong]
     self.mediaObject.setCurrentSource(self.prevSong)
     self.mediaObject.play()
