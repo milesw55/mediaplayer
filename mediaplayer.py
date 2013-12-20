@@ -18,6 +18,7 @@ from src.gui import mediaplayerui
 
 if __name__ == "__main__":
   app = QtGui.QApplication(sys.argv)
+  app.setApplicationName("mediaplayer")
   mainWindow = mediaplayerui.mainwindow()
   mainWindow.show()
   app.exec_()

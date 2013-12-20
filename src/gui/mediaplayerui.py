@@ -16,6 +16,9 @@ import subprocess
 import re
 from style import style
 from PySide import QtGui, QtCore
+from PySide.phonon import Phonon
+
+
 
 ##
 #  Download widget to be put in seperate thread.
@@ -226,7 +229,7 @@ class SongPlayingGroup(QtGui.QGroupBox):
 
   ##
   #  Signal from saying a song started.
-  playing = QtCore.Signal()
+  playing = QtCore.Signal(str)
   
   ##
   #  Main initializer function.
@@ -259,11 +262,7 @@ class SongPlayingGroup(QtGui.QGroupBox):
   #  This is triggered when an item in the list is double clicked. A song will play.
   def onItemDoubleClicked(self, item):
     song = self.names[item.text()]
-    self.prevSong = song
-    pygame.mixer.music.load(song)
-    self.started = True
-    pygame.mixer.music.play()
-    self.playing.emit()
+    self.playing.emit(song)
 
   ##
   #  On song added, update the dictionary and list widget.
@@ -280,12 +279,16 @@ class MusicWidget(QtGui.QWidget):
   #  Main initializer function.
   def __init__(self):
     super(MusicWidget, self).__init__()
+    self.mediaObject = Phonon.MediaObject(self)
+    self.mediaObject.finished.connect(self.onFinished)
+    self.output = Phonon.AudioOutput(Phonon.MusicCategory, self)
+    self.output.setVolume(50)
+    self.path = Phonon.createPath(self.mediaObject, self.output)
     self.setWindowTitle("Media Player")
     self.setObjectName("musicWidget")
     self.setStyleSheet("#musicWidget { background-color: white; }")
     self.started = False
     self.prevSong = None
-    pygame.mixer.init()
 
     mainLayout = QtGui.QHBoxLayout(self)
 
@@ -325,12 +328,22 @@ class MusicWidget(QtGui.QWidget):
   ##
   #  This function will act as a slot to the 'play button'
   #  being triggered.
-  def onPlaying(self):
+  def onPlaying(self, song):
+    self.mediaObject.setCurrentSource(song)
+    self.mediaObject.play()
     self.playButton.setIcon(QtGui.QIcon(os.path.join(os.path.dirname(__file__), "images", "pause.png")))
     self.prevSong = self.groupbox.names[self.groupbox.songList.currentItem().text()]
     self.playing = True
     self.started = True
     
+  ##
+  #  Play next song on finished.
+  def onFinished(self):
+    self.prevSong = self.groupbox.songList.itemFromIndex(self.groupbox.songList.currentRow()+1).text()
+    self.groupbox.songList.setCurrentItem(self.prevSong)
+    self.prevSong = self.groupbox.names[self.prevSong]
+    self.mediaObject.setCurrentSource(self.prevSong)
+    self.mediaObject.play()
 
   ##
   #  This function will act as a slot to the 'play button'
@@ -344,17 +357,17 @@ class MusicWidget(QtGui.QWidget):
     if self.playing:
       if (self.prevSong is None) or (self.prevSong != song):
         self.prevSong = song
-        pygame.mixer.music.load(song)
+        self.mediaObject.setCurrentSource(song)
       if self.started == False:
         self.started = True
-        pygame.mixer.music.play()
-      elif pygame.mixer.music.get_busy():
-        pygame.mixer.music.unpause()
+        self.mediaObject.play()
+      elif self.mediaObject.state() == Phonon.PlayingState:
+        self.mediaObject.pause()
       else:
-        pygame.mixer.music.play()
+        self.mediaObject.play()
       self.playButton.setIcon(QtGui.QIcon(os.path.join(os.path.dirname(__file__), "images", "pause.png")))
     else:
-      pygame.mixer.music.pause()
+      self.mediaObject.pause()
       self.playButton.setIcon(QtGui.QIcon(os.path.join(os.path.dirname(__file__), "images", "play.png")))
 
 ##
