@@ -41,11 +41,16 @@ class DownloadWidget(QtCore.QObject):
       self.error.emit("Invalid name for saving song.")
       return
     audioFile = "/downloads/{}".format(name)
-    ret = subprocess.call(['youtube-dl', '-o', mp4, url])
+    youtube = "youtube-dl"
+    ffmpeg = "ffmpeg"
+    if sys.platform.startswith("win"):
+      youtube = '.\\src\\engine\\youtube-dl.exe'
+      ffmpeg = '.\\src\\engine\\ffmpeg\\bin\\ffmpeg.exe'
+    ret = subprocess.call([youtube, '-o', mp4, url])
     if (ret != 0):
       self.error.emit("Error downloading. URL may be invalid or copyrighted.")
       return
-    command = ['ffmpeg', '-i', mp4]
+    command = [ffmpeg, '-i', mp4]
     if audioFile.endswith("ogg"):
       command.append('-acodec')
       command.append('vorbis')
