@@ -10,7 +10,6 @@
 #    ffmpeg (unix package)
 #
 #  @authors milesw55, ntreado
-import pygame
 import os, sys
 import subprocess
 import re
