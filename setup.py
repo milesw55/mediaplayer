@@ -12,18 +12,16 @@ rootdir = os.path.dirname(__file__)
 if rootdir == "":
   rootdir = os.getcwd()
 for root, subFolders, files in os.walk(rootdir):
-  if not (root.endswith(os.path.sep + "__pycache__") or root.endswith(os.path.sep + "dist") or root.endswith(os.path.sep + "logs") or root.endswith(os.path.sep + "results")\
-    or root.endswith(os.path.sep + "tst_treefrogrpc")):
+  if not (root.endswith(os.path.sep + "__pycache__") or root.endswith(os.path.sep + "dist") or root.endswith(os.path.sep + "downloads")):
     for file in files:
       path = root + os.path.sep + file
       if ((os.path.sep+".git") not in path) and ((rootdir + os.path.sep + "build") not in path) and not file.endswith(".pyw") and path != (rootdir + os.path.sep + "setup.py")\
-        and path != (rootdir + os.path.sep + "_rununittests.py"):
+        and path != (rootdir + os.path.sep + "songlist.txt"):
         includefiles.append(path[(len(rootdir)+len(os.path.sep)):])
 
 includes = []
 for root, subFolders, files in os.walk(rootdir):
-  if not (root.endswith(os.path.sep + "__pycache__") or root.endswith(os.path.sep + "dist") or root.endswith(os.path.sep + "logs") or root.endswith(os.path.sep + "results")\
-    or root.endswith(os.path.sep + "tst_treefrogrpc")):
+  if not (root.endswith(os.path.sep + "__pycache__") or root.endswith(os.path.sep + "dist")):
     for file in files:
       path = root + os.path.sep + file
       if ((os.path.sep+".git") not in path) and ((rootdir + os.path.sep + "build") not in path) and file.endswith(".py") and path != (rootdir + os.path.sep + "setup.py"):
@@ -33,7 +31,7 @@ for root, subFolders, files in os.walk(rootdir):
 #      Edit Major Version and Description here       #
 ######################################################
 vers = "0.0."
-desc = "This is the TOBIAS test automation framework."
+desc = "This is a media player that downloads songs."
 ######################################################
 commits = 0
 try:
@@ -45,9 +43,9 @@ vers = "{}{}".format(vers, commits)
 shortcut_table = [
   ( "DesktopShortcut",                                    # Shortcut
     "DesktopFolder",                                      # Directory_
-    "testexecutive" + " v{}".format(vers),                # Name
+    "mediaplayer" + " v{}".format(vers),                  # Name
     "TARGETDIR",                                          # Component_
-    "[TARGETDIR]testexecutive.exe",                       # Target
+    "[TARGETDIR]mediaplayer.exe",                         # Target
     None,                                                 # Arguments
     None,                                                 # Description
     None,                                                 # Hotkey
@@ -81,15 +79,14 @@ base = None
 if sys.platform == "win32":
   base = "Win32GUI"
 
-
+print("starting setup")
 setup(
-  name = "tobias",
+  name = "mediaplayer",
   version = vers,
   description = desc,
-  author = "JDS Uniphase Corp.",
+  author = "Miles Wentworth",
   executables = [
-    Executable("testexecutive.pyw", base=base, shortcutDir="DesktopFolder", shortcutName="testexecutive" + " v{}".format(vers), icon="setup/images/jdsu.ico", compress=False),
-    Executable("testrunner.pyw", base=base, shortcutDir="DesktopFolder", shortcutName="testrunner" + " v{}".format(vers), icon="setup/images/jdsu.ico", compress=False),
+    Executable("mediaplayer.py", base=base, shortcutDir="DesktopFolder", shortcutName="mediaplayer" + " v{}".format(vers), compress=False),
   ],
   options = options,
 )

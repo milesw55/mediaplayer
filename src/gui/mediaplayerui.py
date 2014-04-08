@@ -13,7 +13,7 @@
 import os, sys
 import subprocess
 import re
-from style import style
+from src.gui.style import style
 from PySide import QtGui, QtCore
 from PySide.phonon import Phonon
 
@@ -124,7 +124,7 @@ class URLDownloadingGroup(QtGui.QGroupBox):
     self.urlLine = QtGui.QLineEdit()
     self.urlLine.setStyleSheet("QLineEdit { background-color: #FFF; }")
     self.urlLine.setFont(StandardFont())
-    urlLayout.addSpacing(27)
+    urlLayout.addSpacing(24)
     urlLayout.addWidget(urlLabel)
     urlLayout.addWidget(self.urlLine)
     urlLayout.addSpacing(65)
@@ -139,8 +139,8 @@ class URLDownloadingGroup(QtGui.QGroupBox):
     self.nameEnd.setFont(StandardFont())
     self.nameEnd.setObjectName("fileType")
     self.nameEnd.setStyleSheet(style.COMBO_BOX)
-    self.nameEnd.addItem(".ogg")
     self.nameEnd.addItem(".mp3")
+    self.nameEnd.addItem(".ogg")
     self.nameEnd.addItem(".wav")
     nameLayout.addWidget(nameLabel)
     nameLayout.addWidget(self.nameLine)
@@ -295,28 +295,28 @@ class MusicWidget(QtGui.QWidget):
     self.started = False
     self.prevSong = None
 
-    mainLayout = QtGui.QHBoxLayout(self)
+    # mainLayout = QtGui.QHBoxLayout(self)
 
-    self.splitter = QtGui.QSplitter()
-    self.splitter.setObjectName("splitter")
-    self.splitter.setStyleSheet(style.SPLITTER)
+    # self.splitter = QtGui.QSplitter()
+    # self.splitter.setObjectName("splitter")
+    # self.splitter.setStyleSheet(style.SPLITTER)
 
-    leftWidget = QtGui.QWidget()
-    leftLayout = QtGui.QVBoxLayout(leftWidget)
+    # leftWidget = QtGui.QWidget()
+    # leftLayout = QtGui.QVBoxLayout(leftWidget)
 
     self.rightWidget = QtGui.QWidget()
-    self.rightLayout = QtGui.QVBoxLayout(self.rightWidget)
+    # self.rightLayout = QtGui.QVBoxLayout(self.rightWidget)
+    self.rightLayout = QtGui.QVBoxLayout(self)
     self.groupbox = SongPlayingGroup("Your Songs:")
     self.rightLayout.addWidget(self.groupbox)
     self.rightGroup = URLDownloadingGroup()
     self.rightGroup.songAdded.connect(self.groupbox.onSongAdded)
     self.groupbox.playing.connect(self.onPlaying)
-    self.rightLayout.addWidget(self.rightGroup)
 
-    self.splitter.addWidget(leftWidget)
-    self.splitter.addWidget(self.rightWidget)
+    # self.splitter.addWidget(leftWidget)
+    # self.splitter.addWidget(self.rightWidget)
 
-    mainLayout.addWidget(self.splitter)
+    # mainLayout.addWidget(self.splitter)
 
     buttonLayout = QtGui.QHBoxLayout()
     self.playing = False
@@ -328,7 +328,9 @@ class MusicWidget(QtGui.QWidget):
     self.playButton.clicked.connect(self.playTriggered)
     buttonLayout.addWidget(self.playButton)
 
-    leftLayout.addLayout(buttonLayout)
+    # leftLayout.addLayout(buttonLayout)
+    self.rightLayout.addLayout(buttonLayout)
+    self.rightLayout.addWidget(self.rightGroup)
 
   ##
   #  This function will act as a slot to the 'play button'
@@ -389,7 +391,9 @@ class mainwindow(QtGui.QMainWindow):
     super(mainwindow, self).__init__()
     self.setObjectName("mainWindow")
     self.setStyleSheet(style.MAIN_WINDOW)
-    self.setGeometry(200, 200, 800, 800)
+    self.setWindowTitle("YouTube Media Player")
+    self.setGeometry(200, 200, 400, 500)
+    self.move(QtGui.QApplication.desktop().screen().rect().center()- self.rect().center())
     exitAction = QtGui.QAction(QtGui.QIcon('exit.png'), '&Exit', self)
     exitAction.setShortcut('Ctrl+Q')
     exitAction.setStatusTip('Exit application')
