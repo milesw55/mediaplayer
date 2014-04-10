@@ -86,7 +86,7 @@ setup(
   description = desc,
   author = "Miles Wentworth",
   executables = [
-    Executable("mediaplayer.py", base=base, shortcutDir="DesktopFolder", shortcutName="mediaplayer" + " v{}".format(vers), compress=False),
+    Executable("mediaplayer.py", base=base, shortcutDir="DesktopFolder", shortcutName="mediaplayer" + " v{}".format(vers), icon='setup/images/windowicon.ico', compress=False),
   ],
   options = options,
 )

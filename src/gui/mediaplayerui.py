@@ -103,9 +103,12 @@ class URLDownloadingGroup(QtGui.QGroupBox):
 
     rightGroupLayout = QtGui.QVBoxLayout(self)
 
-    directionLabel = QtGui.QLabel("You can add songs locally by clicking 'Add Local'." +
-" Alternatively, you can enter a video URL such as one from YouTube and click 'Add URL' to save the audio from that video to your library." +
-" Please note that copyrighted videos will not work. Enjoy.")
+    directionLabel = QtGui.QLabel(
+      "You can add songs locally by clicking 'Add Local'." +
+      " Alternatively, you can enter a video URL such as one" +
+      "from YouTube and click 'Add URL' to save the audio from that video to your library." +
+      " Please note that copyrighted videos will not work. Enjoy."
+    )
     directionLabel.setFont(StandardFont())
     directionLabel.setWordWrap(True)
     rightGroupLayout.addWidget(directionLabel)
@@ -294,16 +297,12 @@ class MusicWidget(QtGui.QWidget):
     self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
     self.started = False
     self.prevSong = None
-
     # mainLayout = QtGui.QHBoxLayout(self)
-
     # self.splitter = QtGui.QSplitter()
     # self.splitter.setObjectName("splitter")
     # self.splitter.setStyleSheet(style.SPLITTER)
-
     # leftWidget = QtGui.QWidget()
     # leftLayout = QtGui.QVBoxLayout(leftWidget)
-
     self.rightWidget = QtGui.QWidget()
     # self.rightLayout = QtGui.QVBoxLayout(self.rightWidget)
     self.rightLayout = QtGui.QVBoxLayout(self)
@@ -312,13 +311,16 @@ class MusicWidget(QtGui.QWidget):
     self.rightGroup = URLDownloadingGroup()
     self.rightGroup.songAdded.connect(self.groupbox.onSongAdded)
     self.groupbox.playing.connect(self.onPlaying)
-
     # self.splitter.addWidget(leftWidget)
     # self.splitter.addWidget(self.rightWidget)
-
     # mainLayout.addWidget(self.splitter)
-
     buttonLayout = QtGui.QHBoxLayout()
+    self.backButton = QtGui.QPushButton()
+    self.backButton.setIcon(QtGui.QIcon(os.path.join(os.path.dirname(__file__), "images", "back.png")))
+    self.backButton.setObjectName("backButton")
+    self.backButton.setStyleSheet(style.multimediaButton("backButton"))
+    self.backButton.setFont(StandardFont())
+    self.backButton.clicked.connect(self.backTriggered)
     self.playing = False
     self.playButton = QtGui.QPushButton()
     self.playButton.setIcon(QtGui.QIcon(os.path.join(os.path.dirname(__file__), "images", "play.png")))
@@ -326,8 +328,15 @@ class MusicWidget(QtGui.QWidget):
     self.playButton.setStyleSheet(style.multimediaButton("playButton"))
     self.playButton.setFont(StandardFont())
     self.playButton.clicked.connect(self.playTriggered)
+    self.forwardButton = QtGui.QPushButton()
+    self.forwardButton.setIcon(QtGui.QIcon(os.path.join(os.path.dirname(__file__), "images", "forward.png")))
+    self.forwardButton.setObjectName("forwardButton")
+    self.forwardButton.setStyleSheet(style.multimediaButton("forwardButton"))
+    self.forwardButton.setFont(StandardFont())
+    self.forwardButton.clicked.connect(self.forwardTriggered)
+    buttonLayout.addWidget(self.backButton)
     buttonLayout.addWidget(self.playButton)
-
+    buttonLayout.addWidget(self.forwardButton)
     # leftLayout.addLayout(buttonLayout)
     self.rightLayout.addLayout(buttonLayout)
     self.rightLayout.addWidget(self.rightGroup)
@@ -343,6 +352,41 @@ class MusicWidget(QtGui.QWidget):
     self.playing = True
     self.started = True
     
+  ##
+  #  This function will act as a slot to the 'play button'
+  #  being triggered.
+  def backTriggered(self):
+    song = self.groupbox.names[self.groupbox.songList.currentItem().text()]
+    row = self.groupbox.songList.currentRow() - 1
+    state = self.mediaObject.state()
+    # print("row: {}; state: {}; total_time - remaining_time: {}".format(row, state)
+    currentTime = self.mediaObject.totalTime() - self.mediaObject.remainingTime()
+    if (self.prevSong is None) or row < 0 or currentTime > 3000:
+      self.prevSong = song
+      self.mediaObject.setCurrentSource(song)
+      self.groupbox.songList.setCurrentRow(row+1)
+    else:
+      self.groupbox.songList.setCurrentRow(row)
+      _prevSong = self.groupbox.songList.item(row).text()
+      self.prevSong = self.groupbox.names[_prevSong]
+      self.mediaObject.setCurrentSource(self.prevSong)
+    if self.started == False:
+      self.started = True
+      self.mediaObject.play()
+      self.playButton.setIcon(QtGui.QIcon(os.path.join(os.path.dirname(__file__), "images", "pause.png")))
+    elif state == Phonon.PlayingState or row >= 0:
+      self.mediaObject.play()
+  
+  ##
+  #  This function will act as a slot to the 'play button'
+  #  being triggered.
+  def forwardTriggered(self):
+    if not self.started:
+      self.started = True
+    self.playing = True
+    self.playButton.setIcon(QtGui.QIcon(os.path.join(os.path.dirname(__file__), "images", "pause.png")))
+    self.onFinished()
+  
   ##
   #  Play next song on finished.
   def onFinished(self):
@@ -392,6 +436,7 @@ class mainwindow(QtGui.QMainWindow):
     self.setObjectName("mainWindow")
     self.setStyleSheet(style.MAIN_WINDOW)
     self.setWindowTitle("YouTube Media Player")
+    self.setWindowIcon(QtGui.QIcon(os.path.join(os.getcwd(), "setup", "images", "windowicon.ico")))
     self.setGeometry(200, 200, 400, 500)
     self.move(QtGui.QApplication.desktop().screen().rect().center()- self.rect().center())
     exitAction = QtGui.QAction(QtGui.QIcon('exit.png'), '&Exit', self)
