@@ -288,6 +288,9 @@ class MusicWidget(QtGui.QWidget):
     super(MusicWidget, self).__init__()
     self.mediaObject = Phonon.MediaObject(self)
     self.mediaObject.finished.connect(self.onFinished)
+    self.mediaObject.tick.connect(self.onTick)
+    self.mediaObject.totalTimeChanged.connect(self.onTotalTimeChanged)
+    # self.mediaObject.setTickInterval(1000)
     self.output = Phonon.AudioOutput(Phonon.MusicCategory, self)
     self.output.setVolume(50)
     self.path = Phonon.createPath(self.mediaObject, self.output)
@@ -314,6 +317,15 @@ class MusicWidget(QtGui.QWidget):
     # self.splitter.addWidget(leftWidget)
     # self.splitter.addWidget(self.rightWidget)
     # mainLayout.addWidget(self.splitter)
+    mediaLayout = QtGui.QVBoxLayout()
+    self.slider = Phonon.SeekSlider()
+    self.slider.setMediaObject(self.mediaObject)
+    # self.slider.setSingleStep(1000)
+    # self.slider.setStyleSheet(style.SLIDER)
+    # self.slider.sliderMoved.connect(self.onSliderMoved)
+    # self.slider.sliderPressed.connect(self.onSliderPressed)
+    # self.slider.sliderReleased.connect(self.onSliderReleased)
+    self.sliderPressed = False
     buttonLayout = QtGui.QHBoxLayout()
     self.backButton = QtGui.QPushButton()
     self.backButton.setIcon(QtGui.QIcon(os.path.join(os.path.dirname(__file__), "images", "back.png")))
@@ -334,11 +346,17 @@ class MusicWidget(QtGui.QWidget):
     self.forwardButton.setStyleSheet(style.multimediaButton("forwardButton"))
     self.forwardButton.setFont(StandardFont())
     self.forwardButton.clicked.connect(self.forwardTriggered)
+    self.timeLabel = QtGui.QLabel("--:--/--:--")
+    self.timeLabel.setFont(StandardFont())
     buttonLayout.addWidget(self.backButton)
     buttonLayout.addWidget(self.playButton)
     buttonLayout.addWidget(self.forwardButton)
+    buttonLayout.addStretch(1)
+    buttonLayout.addWidget(self.timeLabel)
+    mediaLayout.addWidget(self.slider)
+    mediaLayout.addLayout(buttonLayout)
     # leftLayout.addLayout(buttonLayout)
-    self.rightLayout.addLayout(buttonLayout)
+    self.rightLayout.addLayout(mediaLayout)
     self.rightLayout.addWidget(self.rightGroup)
 
   ##
@@ -347,11 +365,36 @@ class MusicWidget(QtGui.QWidget):
   def onPlaying(self, song):
     self.mediaObject.setCurrentSource(song)
     self.mediaObject.play()
+    # self.slider.setSliderPosition(0)
     self.playButton.setIcon(QtGui.QIcon(os.path.join(os.path.dirname(__file__), "images", "pause.png")))
     self.prevSong = self.groupbox.names[self.groupbox.songList.currentItem().text()]
     self.playing = True
     self.started = True
+
+  ##
+  #  This function will act as a slot to the 'play button'
+  #  being triggered.
+  def onSliderMoved(self, position):
+    totalTime = self.mediaObject.totalTime()
+    print("totalTime: {}, position: {}".format(totalTime, position))
+    # max = self.slider.maximum()
+    ratio = (position+0.0) / max
+    self.mediaObject.seek(int(ratio * totalTime))
     
+  ##
+  #  This function will act as a slot to the 'play button'
+  #  being triggered.
+  def onSliderPressed(self):
+    print("onSliderPressed")
+    self.sliderPressed = True
+    
+  ##
+  #  This function will act as a slot to the 'play button'
+  #  being triggered.
+  def onSliderReleased(self):
+    print("Released")
+    self.sliderPressed = False
+
   ##
   #  This function will act as a slot to the 'play button'
   #  being triggered.
@@ -370,6 +413,7 @@ class MusicWidget(QtGui.QWidget):
       _prevSong = self.groupbox.songList.item(row).text()
       self.prevSong = self.groupbox.names[_prevSong]
       self.mediaObject.setCurrentSource(self.prevSong)
+    # self.slider.setSliderPosition(0)
     if self.started == False:
       self.started = True
       self.mediaObject.play()
@@ -399,7 +443,55 @@ class MusicWidget(QtGui.QWidget):
     self.groupbox.songList.setCurrentRow(row)
     self.prevSong = self.groupbox.names[self.prevSong]
     self.mediaObject.setCurrentSource(self.prevSong)
+    # self.slider.setSliderPosition(0)
     self.mediaObject.play()
+    
+  ##
+  #  Play next song on finished.
+  def onTick(self, time):
+    print(self.mediaObject.remainingTime())
+    print(time)
+    seconds = time/1000
+    if seconds - int(seconds) < 0.5:
+      seconds = int(seconds)
+    else:
+      seconds = int(seconds) + 1
+    _seconds = seconds
+    minutes = 0
+    while seconds >= 60:
+      minutes += 1
+      seconds -= 60
+    text = self.timeLabel.text()
+    index = text.split("/")[1]
+    if seconds < 10:
+      self.timeLabel.setText("{1}:0{2}/{0}".format(index, minutes, seconds))
+    else:
+      self.timeLabel.setText("{1}:{2}/{0}".format(index, minutes, seconds))
+    # if not self.sliderPressed:
+      # # self.slider.setSliderPosition(_seconds)
+
+  ##
+  #  Slot for totalTimeChanged.
+  def onTotalTimeChanged(self, totalTime):
+    seconds = totalTime/2224.25
+    if seconds - int(seconds) < 0.5:
+      seconds = int(seconds)
+    else:
+      seconds = int(seconds) + 1
+    _seconds = seconds
+    minutes = 0
+    while seconds >= 60:
+      minutes += 1
+      seconds -= 60
+    text = self.timeLabel.text()
+    index = text.split("/")[0]
+    if index == "--:--":
+      index = "0:00"
+    if seconds < 10:
+      self.timeLabel.setText("{0}/{1}:0{2}".format(index, minutes, seconds))
+    else:
+      self.timeLabel.setText("{0}/{1}:{2}".format(index, minutes, seconds))
+    # self.slider.setRange(0, _seconds)
 
   ##
   #  This function will act as a slot to the 'play button'
@@ -414,6 +506,7 @@ class MusicWidget(QtGui.QWidget):
       if (self.prevSong is None) or (self.prevSong != song):
         self.prevSong = song
         self.mediaObject.setCurrentSource(song)
+        # self.slider.setSliderPosition(0)
       if self.started == False:
         self.started = True
         self.mediaObject.play()
