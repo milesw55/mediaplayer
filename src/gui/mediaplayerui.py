@@ -376,7 +376,6 @@ class MusicWidget(QtGui.QWidget):
   #  being triggered.
   def onSliderMoved(self, position):
     totalTime = self.mediaObject.totalTime()
-    print("totalTime: {}, position: {}".format(totalTime, position))
     # max = self.slider.maximum()
     ratio = (position+0.0) / max
     self.mediaObject.seek(int(ratio * totalTime))
@@ -385,14 +384,12 @@ class MusicWidget(QtGui.QWidget):
   #  This function will act as a slot to the 'play button'
   #  being triggered.
   def onSliderPressed(self):
-    print("onSliderPressed")
     self.sliderPressed = True
     
   ##
   #  This function will act as a slot to the 'play button'
   #  being triggered.
   def onSliderReleased(self):
-    print("Released")
     self.sliderPressed = False
 
   ##
@@ -402,7 +399,6 @@ class MusicWidget(QtGui.QWidget):
     song = self.groupbox.names[self.groupbox.songList.currentItem().text()]
     row = self.groupbox.songList.currentRow() - 1
     state = self.mediaObject.state()
-    # print("row: {}; state: {}; total_time - remaining_time: {}".format(row, state)
     currentTime = self.mediaObject.totalTime() - self.mediaObject.remainingTime()
     if (self.prevSong is None) or row < 0 or currentTime > 3000:
       self.prevSong = song
@@ -419,7 +415,9 @@ class MusicWidget(QtGui.QWidget):
       self.mediaObject.play()
       self.playButton.setIcon(QtGui.QIcon(os.path.join(os.path.dirname(__file__), "images", "pause.png")))
     elif state == Phonon.PlayingState or row >= 0:
+      self.playing = True
       self.mediaObject.play()
+      self.playButton.setIcon(QtGui.QIcon(os.path.join(os.path.dirname(__file__), "images", "pause.png")))
   
   ##
   #  This function will act as a slot to the 'play button'
@@ -449,8 +447,6 @@ class MusicWidget(QtGui.QWidget):
   ##
   #  Play next song on finished.
   def onTick(self, time):
-    print(self.mediaObject.remainingTime())
-    print(time)
     seconds = time/1000
     if seconds - int(seconds) < 0.5:
       seconds = int(seconds)
@@ -530,8 +526,7 @@ class mainwindow(QtGui.QMainWindow):
     self.setStyleSheet(style.MAIN_WINDOW)
     self.setWindowTitle("YouTube Media Player")
     self.setWindowIcon(QtGui.QIcon(os.path.join(os.getcwd(), "setup", "images", "windowicon.ico")))
-    self.setGeometry(200, 200, 400, 500)
-    self.move(QtGui.QApplication.desktop().screen().rect().center()- self.rect().center())
+    self.resize(400, 500)
     exitAction = QtGui.QAction(QtGui.QIcon('exit.png'), '&Exit', self)
     exitAction.setShortcut('Ctrl+Q')
     exitAction.setStatusTip('Exit application')
