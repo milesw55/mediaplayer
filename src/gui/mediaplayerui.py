@@ -129,7 +129,10 @@ class URLDownloadingGroup(QtGui.QGroupBox):
     self.urlLine = QtGui.QLineEdit()
     self.urlLine.setStyleSheet("QLineEdit { background-color: #FFF; }")
     self.urlLine.setFont(StandardFont())
-    urlLayout.addSpacing(24)
+    if sys.platform.startswith("darwin"):
+      urlLayout.addSpacing(18)
+    else:
+      urlLayout.addSpacing(24)
     urlLayout.addWidget(urlLabel)
     urlLayout.addWidget(self.urlLine)
     urlLayout.addSpacing(65)
@@ -471,7 +474,7 @@ class MusicWidget(QtGui.QWidget):
   ##
   #  Slot for totalTimeChanged.
   def onTotalTimeChanged(self, totalTime):
-    seconds = totalTime
+    seconds = totalTime/1000
     if sys.platform.startswith("win"):
       seconds = totalTime/2224.25
     if seconds - int(seconds) < 0.5:
