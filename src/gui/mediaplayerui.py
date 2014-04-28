@@ -46,6 +46,8 @@ class DownloadWidget(QtCore.QObject):
     if sys.platform.startswith("win"):
       youtube = '.\\src\\engine\\youtube-dl.exe'
       ffmpeg = '.\\src\\engine\\ffmpeg\\bin\\ffmpeg.exe'
+    elif sys.platform.startswith("darwin"):
+      ffmpeg = './src/engine/ffmpeg/bin/ffmpeg'
     ret = subprocess.call([youtube, '-o', mp4, url])
     if (ret != 0):
       self.error.emit("Error downloading. URL may be invalid or copyrighted.")
