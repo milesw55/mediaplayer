@@ -471,7 +471,9 @@ class MusicWidget(QtGui.QWidget):
   ##
   #  Slot for totalTimeChanged.
   def onTotalTimeChanged(self, totalTime):
-    seconds = totalTime/2224.25
+    seconds = totalTime
+    if sys.platform.startswith("win"):
+      seconds = totalTime/2224.25
     if seconds - int(seconds) < 0.5:
       seconds = int(seconds)
     else:
