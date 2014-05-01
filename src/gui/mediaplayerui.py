@@ -362,43 +362,9 @@ class MusicWidget(QtGui.QWidget):
     # leftLayout.addLayout(buttonLayout)
     self.rightLayout.addLayout(mediaLayout)
     self.rightLayout.addWidget(self.rightGroup)
-
-  ##
-  #  This function will act as a slot to the 'play button'
-  #  being triggered.
-  def onPlaying(self, song):
-    # TODO: Change *.mp3 files to *.wav if in a windows environment.
-    #         This is for the sake of giving the GUI a file that works
-    #         correctly with PySide.Phonon.MediaObjects.
-    self.mediaObject.setCurrentSource(song)
-    self.mediaObject.play()
-    self.playButton.setIcon(QtGui.QIcon(os.path.join(os.path.dirname(__file__), "images", "pause.png")))
-    self.prevSong = self.groupbox.names[self.groupbox.songList.currentItem().text()]
-    self.playing = True
-    self.started = True
-
-  ##
-  #  This function will act as a slot to the 'play button'
-  #  being triggered.
-  def onSliderMoved(self, position):
-    totalTime = self.mediaObject.totalTime()
-    ratio = (position+0.0) / max
-    self.mediaObject.seek(int(ratio * totalTime))
     
   ##
-  #  This function will act as a slot to the 'play button'
-  #  being triggered.
-  def onSliderPressed(self):
-    self.sliderPressed = True
-    
-  ##
-  #  This function will act as a slot to the 'play button'
-  #  being triggered.
-  def onSliderReleased(self):
-    self.sliderPressed = False
-
-  ##
-  #  This function will act as a slot to the 'play button'
+  #  This function will act as a slot to the 'back button'
   #  being triggered.
   def backTriggered(self):
     song = self.groupbox.names[self.groupbox.songList.currentItem().text()]
@@ -424,7 +390,7 @@ class MusicWidget(QtGui.QWidget):
       self.playButton.setIcon(QtGui.QIcon(os.path.join(os.path.dirname(__file__), "images", "pause.png")))
   
   ##
-  #  This function will act as a slot to the 'play button'
+  #  This function will act as a slot to the 'forward button'
   #  being triggered.
   def forwardTriggered(self):
     if not self.started:
@@ -432,7 +398,7 @@ class MusicWidget(QtGui.QWidget):
     self.playing = True
     self.playButton.setIcon(QtGui.QIcon(os.path.join(os.path.dirname(__file__), "images", "pause.png")))
     self.onFinished()
-  
+
   ##
   #  Play next song on finished.
   def onFinished(self):
@@ -446,6 +412,40 @@ class MusicWidget(QtGui.QWidget):
     self.prevSong = self.groupbox.names[self.prevSong]
     self.mediaObject.setCurrentSource(self.prevSong)
     self.mediaObject.play()
+  
+  ##
+  #  This function will act as a slot to the 'SongPlayingGroup.playing' signal
+  #  being triggered.
+  def onPlaying(self, song):
+    # TODO: Change *.mp3 files to *.wav if in a windows environment.
+    #         This is for the sake of giving the GUI a file that works
+    #         correctly with PySide.Phonon.MediaObjects.
+    self.mediaObject.setCurrentSource(song)
+    self.mediaObject.play()
+    self.playButton.setIcon(QtGui.QIcon(os.path.join(os.path.dirname(__file__), "images", "pause.png")))
+    self.prevSong = self.groupbox.names[self.groupbox.songList.currentItem().text()]
+    self.playing = True
+    self.started = True
+
+  ##
+  #  This function will act as a slot to the 'slider moved'
+  #  being triggered.
+  def onSliderMoved(self, position):
+    totalTime = self.mediaObject.totalTime()
+    ratio = (position+0.0) / max
+    self.mediaObject.seek(int(ratio * totalTime))
+    
+  ##
+  #  This function will act as a slot to the 'slider pressed'
+  #  being triggered.
+  def onSliderPressed(self):
+    self.sliderPressed = True
+    
+  ##
+  #  This function will act as a slot to the 'slider release'
+  #  being triggered.
+  def onSliderReleased(self):
+    self.sliderPressed = False
     
   ##
   #  Play next song on finished.
