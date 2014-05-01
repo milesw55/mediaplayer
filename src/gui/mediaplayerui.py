@@ -48,6 +48,7 @@ class DownloadWidget(QtCore.QObject):
       ffmpeg = '.\\src\\engine\\ffmpeg\\bin\\ffmpeg.exe'
     elif sys.platform.startswith("darwin"):
       ffmpeg = './src/engine/ffmpeg/bin/ffmpeg'
+      # Add code for prompting installation of youtube-dl
     ret = subprocess.call([youtube, '-o', mp4, url])
     if (ret != 0):
       self.error.emit("Error downloading. URL may be invalid or copyrighted.")
@@ -71,7 +72,6 @@ class DownloadWidget(QtCore.QObject):
       return
     subprocess.call(['rm', mp4])
     self.songAdded.emit(audioFile)
-
 
 ##
 #  Standard Font.
@@ -282,7 +282,6 @@ class SongPlayingGroup(QtGui.QGroupBox):
     self.names[os.path.basename(fileName)] = fileName
     self.songList.addItem(os.path.basename(fileName))
 
-
 ##
 #  This is the main widget that will parent
 #  most of the GUI's features. 
@@ -368,9 +367,11 @@ class MusicWidget(QtGui.QWidget):
   #  This function will act as a slot to the 'play button'
   #  being triggered.
   def onPlaying(self, song):
+    # TODO: Change *.mp3 files to *.wav if in a windows environment.
+    #         This is for the sake of giving the GUI a file that works
+    #         correctly with PySide.Phonon.MediaObjects.
     self.mediaObject.setCurrentSource(song)
     self.mediaObject.play()
-    # self.slider.setSliderPosition(0)
     self.playButton.setIcon(QtGui.QIcon(os.path.join(os.path.dirname(__file__), "images", "pause.png")))
     self.prevSong = self.groupbox.names[self.groupbox.songList.currentItem().text()]
     self.playing = True
@@ -381,7 +382,6 @@ class MusicWidget(QtGui.QWidget):
   #  being triggered.
   def onSliderMoved(self, position):
     totalTime = self.mediaObject.totalTime()
-    # max = self.slider.maximum()
     ratio = (position+0.0) / max
     self.mediaObject.seek(int(ratio * totalTime))
     
@@ -414,7 +414,6 @@ class MusicWidget(QtGui.QWidget):
       _prevSong = self.groupbox.songList.item(row).text()
       self.prevSong = self.groupbox.names[_prevSong]
       self.mediaObject.setCurrentSource(self.prevSong)
-    # self.slider.setSliderPosition(0)
     if self.started == False:
       self.started = True
       self.mediaObject.play()
@@ -446,7 +445,6 @@ class MusicWidget(QtGui.QWidget):
     self.groupbox.songList.setCurrentRow(row)
     self.prevSong = self.groupbox.names[self.prevSong]
     self.mediaObject.setCurrentSource(self.prevSong)
-    # self.slider.setSliderPosition(0)
     self.mediaObject.play()
     
   ##
@@ -468,14 +466,13 @@ class MusicWidget(QtGui.QWidget):
       self.timeLabel.setText("{1}:0{2}/{0}".format(index, minutes, seconds))
     else:
       self.timeLabel.setText("{1}:{2}/{0}".format(index, minutes, seconds))
-    # if not self.sliderPressed:
-      # # self.slider.setSliderPosition(_seconds)
 
   ##
   #  Slot for totalTimeChanged.
   def onTotalTimeChanged(self, totalTime):
+    print(self.prevSong)
     seconds = totalTime/1000
-    if sys.platform.startswith("win"):
+    if sys.platform.startswith("win") and not self.prevSong.endswith("wav"):
       seconds = totalTime/2224.25
     if seconds - int(seconds) < 0.5:
       seconds = int(seconds)
@@ -494,7 +491,6 @@ class MusicWidget(QtGui.QWidget):
       self.timeLabel.setText("{0}/{1}:0{2}".format(index, minutes, seconds))
     else:
       self.timeLabel.setText("{0}/{1}:{2}".format(index, minutes, seconds))
-    # self.slider.setRange(0, _seconds)
 
   ##
   #  This function will act as a slot to the 'play button'
@@ -509,7 +505,6 @@ class MusicWidget(QtGui.QWidget):
       if (self.prevSong is None) or (self.prevSong != song):
         self.prevSong = song
         self.mediaObject.setCurrentSource(song)
-        # self.slider.setSliderPosition(0)
       if self.started == False:
         self.started = True
         self.mediaObject.play()
@@ -538,12 +533,23 @@ class mainwindow(QtGui.QMainWindow):
     exitAction.setShortcut('Ctrl+Q')
     exitAction.setStatusTip('Exit application')
     exitAction.triggered.connect(self.close)
-
+    viewDownloadsAction = QtGui.QAction("Show in folder...", self)
+    viewDownloadsAction.setShortcut('Ctrl+D')
+    viewDownloadsAction.triggered.connect(self.openDownloadsFolder)
+    
     self.statusBar()
 
     menubar = self.menuBar()
     fileMenu = menubar.addMenu('&File')
     fileMenu.addAction(exitAction)
+    downloadsMenu = menubar.addMenu("&Downloads")
+    downloadsMenu.addAction(viewDownloadsAction)
     self.musicWidget = MusicWidget()
     self.setCentralWidget(self.musicWidget)
 
+  ##
+  #  This function will open the downloads folder.
+  def openDownloadsFolder(self):
+    self.fileDialog = QtGui.QFileDialog(self, "Downloads", "downloads/")
+    self.fileDialog.show()
+  
