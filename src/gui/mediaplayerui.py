@@ -221,7 +221,8 @@ class URLDownloadingGroup(QtGui.QGroupBox):
   ##
   #  Updates.
   def onAudioFileAdded(self, audioFile):
-    fileName = os.getcwd()+ audioFile
+    fileName = os.getcwd() + audioFile
+    fileName = fileName.replace("\\", "/")
     with open("songlist.txt", 'a') as f:
       f.write(fileName + "\n")
     self.addButton.setEnabled(True)
@@ -290,11 +291,11 @@ class MusicWidget(QtGui.QWidget):
   #  Main initializer function.
   def __init__(self):
     super(MusicWidget, self).__init__()
+    self.songs = []
     self.mediaObject = Phonon.MediaObject(self)
     self.mediaObject.finished.connect(self.onFinished)
     self.mediaObject.tick.connect(self.onTick)
     self.mediaObject.totalTimeChanged.connect(self.onTotalTimeChanged)
-    # self.mediaObject.setTickInterval(1000)
     self.output = Phonon.AudioOutput(Phonon.MusicCategory, self)
     self.output.setVolume(50)
     self.path = Phonon.createPath(self.mediaObject, self.output)
@@ -304,31 +305,16 @@ class MusicWidget(QtGui.QWidget):
     self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
     self.started = False
     self.prevSong = None
-    # mainLayout = QtGui.QHBoxLayout(self)
-    # self.splitter = QtGui.QSplitter()
-    # self.splitter.setObjectName("splitter")
-    # self.splitter.setStyleSheet(style.SPLITTER)
-    # leftWidget = QtGui.QWidget()
-    # leftLayout = QtGui.QVBoxLayout(leftWidget)
     self.rightWidget = QtGui.QWidget()
-    # self.rightLayout = QtGui.QVBoxLayout(self.rightWidget)
     self.rightLayout = QtGui.QVBoxLayout(self)
     self.groupbox = SongPlayingGroup("Your Songs:")
     self.rightLayout.addWidget(self.groupbox)
     self.rightGroup = URLDownloadingGroup()
     self.rightGroup.songAdded.connect(self.groupbox.onSongAdded)
     self.groupbox.playing.connect(self.onPlaying)
-    # self.splitter.addWidget(leftWidget)
-    # self.splitter.addWidget(self.rightWidget)
-    # mainLayout.addWidget(self.splitter)
     mediaLayout = QtGui.QVBoxLayout()
     self.slider = Phonon.SeekSlider()
     self.slider.setMediaObject(self.mediaObject)
-    # self.slider.setSingleStep(1000)
-    # self.slider.setStyleSheet(style.SLIDER)
-    # self.slider.sliderMoved.connect(self.onSliderMoved)
-    # self.slider.sliderPressed.connect(self.onSliderPressed)
-    # self.slider.sliderReleased.connect(self.onSliderReleased)
     self.sliderPressed = False
     buttonLayout = QtGui.QHBoxLayout()
     self.backButton = QtGui.QPushButton()
@@ -359,7 +345,6 @@ class MusicWidget(QtGui.QWidget):
     buttonLayout.addWidget(self.timeLabel)
     mediaLayout.addWidget(self.slider)
     mediaLayout.addLayout(buttonLayout)
-    # leftLayout.addLayout(buttonLayout)
     self.rightLayout.addLayout(mediaLayout)
     self.rightLayout.addWidget(self.rightGroup)
     
@@ -373,13 +358,12 @@ class MusicWidget(QtGui.QWidget):
     currentTime = self.mediaObject.totalTime() - self.mediaObject.remainingTime()
     if (self.prevSong is None) or row < 0 or currentTime > 3000:
       self.prevSong = song
-      self.mediaObject.setCurrentSource(song)
       self.groupbox.songList.setCurrentRow(row+1)
     else:
       self.groupbox.songList.setCurrentRow(row)
       _prevSong = self.groupbox.songList.item(row).text()
       self.prevSong = self.groupbox.names[_prevSong]
-      self.mediaObject.setCurrentSource(self.prevSong)
+    self.setCurrentSource(self.prevSong)
     if self.started == False:
       self.started = True
       self.mediaObject.play()
@@ -410,43 +394,20 @@ class MusicWidget(QtGui.QWidget):
     self.prevSong = self.groupbox.songList.item(row).text()
     self.groupbox.songList.setCurrentRow(row)
     self.prevSong = self.groupbox.names[self.prevSong]
-    self.mediaObject.setCurrentSource(self.prevSong)
+    self.setCurrentSource(self.prevSong)
     self.mediaObject.play()
   
   ##
   #  This function will act as a slot to the 'SongPlayingGroup.playing' signal
   #  being triggered.
   def onPlaying(self, song):
-    # TODO: Change *.mp3 files to *.wav if in a windows environment.
-    #         This is for the sake of giving the GUI a file that works
-    #         correctly with PySide.Phonon.MediaObjects.
-    self.mediaObject.setCurrentSource(song)
+    self.setCurrentSource(song)
     self.mediaObject.play()
     self.playButton.setIcon(QtGui.QIcon(os.path.join(os.path.dirname(__file__), "images", "pause.png")))
     self.prevSong = self.groupbox.names[self.groupbox.songList.currentItem().text()]
     self.playing = True
     self.started = True
 
-  ##
-  #  This function will act as a slot to the 'slider moved'
-  #  being triggered.
-  def onSliderMoved(self, position):
-    totalTime = self.mediaObject.totalTime()
-    ratio = (position+0.0) / max
-    self.mediaObject.seek(int(ratio * totalTime))
-    
-  ##
-  #  This function will act as a slot to the 'slider pressed'
-  #  being triggered.
-  def onSliderPressed(self):
-    self.sliderPressed = True
-    
-  ##
-  #  This function will act as a slot to the 'slider release'
-  #  being triggered.
-  def onSliderReleased(self):
-    self.sliderPressed = False
-    
   ##
   #  Play next song on finished.
   def onTick(self, time):
@@ -470,10 +431,7 @@ class MusicWidget(QtGui.QWidget):
   ##
   #  Slot for totalTimeChanged.
   def onTotalTimeChanged(self, totalTime):
-    print(self.prevSong)
     seconds = totalTime/1000
-    if sys.platform.startswith("win") and not self.prevSong.endswith("wav"):
-      seconds = totalTime/2224.25
     if seconds - int(seconds) < 0.5:
       seconds = int(seconds)
     else:
@@ -504,7 +462,7 @@ class MusicWidget(QtGui.QWidget):
     if self.playing:
       if (self.prevSong is None) or (self.prevSong != song):
         self.prevSong = song
-        self.mediaObject.setCurrentSource(song)
+        self.setCurrentSource(song)
       if self.started == False:
         self.started = True
         self.mediaObject.play()
@@ -516,6 +474,29 @@ class MusicWidget(QtGui.QWidget):
     else:
       self.mediaObject.pause()
       self.playButton.setIcon(QtGui.QIcon(os.path.join(os.path.dirname(__file__), "images", "play.png")))
+
+  ##
+  #  Set the current source. Also perform some system dependent
+  #  checks.
+  def setCurrentSource(self, song):
+    if sys.platform.startswith("win") and not song.endswith("wav"):
+      songName = song.rsplit("/", 1)[1].rsplit(".", 1)[0]
+      songName = "{}42348096709138027698504.wav".format(songName)
+      wavHash = os.path.join(os.getcwd(), songName)
+      _song = song
+      song = wavHash
+      if wavHash not in self.songs:
+        print("{} not in self.songs".format(wavHash))
+        print("Adding...")
+        self.songs.append(wavHash)
+        print("Complete!")
+        self.mediaObject.setCurrentSource(None)
+        ffmpeg = '.\\src\\engine\\ffmpeg\\bin\\ffmpeg.exe'
+        command = [ffmpeg, '-i', _song, songName]
+        ret = subprocess.call(command)
+    self.mediaObject.setCurrentSource(song)
+
+
 
 ##
 #  This is the main window.
