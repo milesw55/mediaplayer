@@ -11,6 +11,7 @@
 #
 #  @authors milesw55, ntreado
 import os, sys
+import shutil
 import subprocess
 import re
 from src.gui.style import style
@@ -68,9 +69,9 @@ class DownloadWidget(QtCore.QObject):
     ret = subprocess.call(command)
     if (ret != 0):
       self.error.emit("Error ripping audio.")
-      subprocess.call(['rm', mp4])
+      os.remove(mp4)
       return
-    subprocess.call(['rm', mp4])
+    os.remove(mp4)
     self.songAdded.emit(audioFile)
 
 ##
@@ -372,7 +373,18 @@ class MusicWidget(QtGui.QWidget):
       self.playing = True
       self.mediaObject.play()
       self.playButton.setIcon(QtGui.QIcon(os.path.join(os.path.dirname(__file__), "images", "pause.png")))
-  
+
+  ##
+  #  Close Event.
+  def closeEvent(self, e):
+    try:
+      self.mediaObject.setCurrentSource(None)
+      shutil.rmtree("cached")
+    except Exception as ex:
+      print("Exception")
+      pass
+    e.accept()
+
   ##
   #  This function will act as a slot to the 'forward button'
   #  being triggered.
@@ -481,8 +493,9 @@ class MusicWidget(QtGui.QWidget):
   def setCurrentSource(self, song):
     if sys.platform.startswith("win") and not song.endswith("wav"):
       songName = song.rsplit("/", 1)[1].rsplit(".", 1)[0]
-      songName = "{}42348096709138027698504.wav".format(songName)
-      wavHash = os.path.join(os.getcwd(), songName)
+      songName = "/cached/{}42348096709138027698504.wav".format(songName)
+      wavHash = os.getcwd() + songName
+      wavHash = wavHash.replace("\\", "/")
       _song = song
       song = wavHash
       if wavHash not in self.songs:
@@ -492,11 +505,15 @@ class MusicWidget(QtGui.QWidget):
         print("Complete!")
         self.mediaObject.setCurrentSource(None)
         ffmpeg = '.\\src\\engine\\ffmpeg\\bin\\ffmpeg.exe'
-        command = [ffmpeg, '-i', _song, songName]
+        dir = os.path.dirname(wavHash)
+        try:
+          os.stat(dir)
+        except:
+          os.mkdir(dir)
+        command = [ffmpeg, '-i', _song, wavHash]
+        print(command)
         ret = subprocess.call(command)
     self.mediaObject.setCurrentSource(song)
-
-
 
 ##
 #  This is the main window.
@@ -531,6 +548,16 @@ class mainwindow(QtGui.QMainWindow):
   ##
   #  This function will open the downloads folder.
   def openDownloadsFolder(self):
-    self.fileDialog = QtGui.QFileDialog(self, "Downloads", "downloads/")
-    self.fileDialog.show()
-  
+    cmd = ''
+    if sys.platform.startswith("win"):
+      cmd = 'explorer'
+    elif sys.platform.startswith("darwin"):
+      cmd = 'open'
+    else:
+      cmd = 'nautilus'
+    command = [cmd, 'downloads']
+    ret = subprocess.call(command)
+    
+  def closeEvent(self, e):
+    self.musicWidget.close()
+    e.accept()
