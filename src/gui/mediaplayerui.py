@@ -577,14 +577,21 @@ class mainwindow(QtGui.QMainWindow):
   #  This function will open the downloads folder.
   def openDownloadsFolder(self):
     cmd = ''
+    path = ''
     if sys.platform.startswith("win"):
       cmd = 'explorer'
+      path = 'downloads'
     elif sys.platform.startswith("darwin"):
       cmd = 'open'
+      path = './downloads'
     else:
       cmd = 'nautilus'
-    command = [cmd, 'downloads']
-    ret = subprocess.call(command, shell=True)
+      path = './downloads'
+    command = [cmd, path]
+    if not sys.platform.startswith("darwin"):
+      ret = subprocess.call(command, shell=True)
+    else:
+      ret = subprocess.call(cmd+' '+path, shell=True)
     
   def closeEvent(self, e):
     self.musicWidget.close()
