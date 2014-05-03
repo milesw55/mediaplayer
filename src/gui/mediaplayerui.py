@@ -50,7 +50,7 @@ class DownloadWidget(QtCore.QObject):
     elif sys.platform.startswith("darwin"):
       ffmpeg = './src/engine/ffmpeg/bin/ffmpeg'
       # Add code for prompting installation of youtube-dl
-    ret = subprocess.call([youtube, '-o', mp4, url])
+    ret = subprocess.call([youtube, '-o', mp4, url], shell=True)
     if (ret != 0):
       self.error.emit("Error downloading. URL may be invalid or copyrighted.")
       return
@@ -66,7 +66,7 @@ class DownloadWidget(QtCore.QObject):
       command.append('-strict')
       command.append('-2')
     command.append(".{}".format(audioFile))
-    ret = subprocess.call(command)
+    ret = subprocess.call(command, shell=True)
     if (ret != 0):
       self.error.emit("Error ripping audio.")
       os.remove(mp4)
@@ -251,13 +251,19 @@ class SongPlayingGroup(QtGui.QGroupBox):
     super(SongPlayingGroup, self).__init__(name)
     self.setFont(StandardFont())
     gboxLayout = QtGui.QVBoxLayout(self)
-
     self.songList = QtGui.QListWidget()
     self.songList.setObjectName("listWidget")
     self.songList.setFont(StandardFont())
     self.songList.setStyleSheet(style.LIST_WIDGET)
     self.songList.itemDoubleClicked.connect(self.onItemDoubleClicked)
-
+    self.songList.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+    self.connect(
+      self.songList,
+      QtCore.SIGNAL('customContextMenuRequested(const QPoint&)'),
+      self.onContextMenuRequested
+    )
+    self.remove = QtGui.QAction("Remove", self)
+    self.remove.triggered.connect(self.removeTriggered)
     content = ""
     self.names = {}
     with open("songlist.txt", 'a') as f:
@@ -268,9 +274,16 @@ class SongPlayingGroup(QtGui.QGroupBox):
       if song != "":
         self.names[os.path.basename(song)] = song
         self.songList.addItem(os.path.basename(song))
-
     gboxLayout.addWidget(self.songList)
     self.setLayout(gboxLayout)
+
+  ##
+  #  Context Menu Requested.
+  def onContextMenuRequested(self, point):
+    if self.songList.itemAt(point) is not None:
+      self.rightClickMenu = QtGui.QMenu()
+      self.rightClickMenu.addAction(self.remove)
+      self.rightClickMenu.popup(self.songList.mapToGlobal(point))
 
   ##
   #  This is triggered when an item in the list is double clicked. A song will play.
@@ -283,6 +296,21 @@ class SongPlayingGroup(QtGui.QGroupBox):
   def onSongAdded(self, fileName):
     self.names[os.path.basename(fileName)] = fileName
     self.songList.addItem(os.path.basename(fileName))
+
+  ##
+  #  Remove Triggered.
+  def removeTriggered(self):
+    item = self.songList.currentItem()
+    songName = self.names[item.text()]
+    row = self.songList.row(item)
+    self.songList.takeItem(row)
+    lines = None
+    with open("songlist.txt", "r") as f:
+      lines = f.readlines()
+    with open("songlist.txt", "w") as f:
+      for line in lines:
+        if line.strip() != songName:
+          f.write(line)
 
 ##
 #  This is the main widget that will parent
@@ -512,7 +540,7 @@ class MusicWidget(QtGui.QWidget):
           os.mkdir(dir)
         command = [ffmpeg, '-i', _song, wavHash]
         print(command)
-        ret = subprocess.call(command)
+        ret = subprocess.call(command, shell=True)
     self.mediaObject.setCurrentSource(song)
 
 ##
@@ -556,7 +584,7 @@ class mainwindow(QtGui.QMainWindow):
     else:
       cmd = 'nautilus'
     command = [cmd, 'downloads']
-    ret = subprocess.call(command)
+    ret = subprocess.call(command, shell=True)
     
   def closeEvent(self, e):
     self.musicWidget.close()
