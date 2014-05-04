@@ -552,7 +552,7 @@ class mainwindow(QtGui.QMainWindow):
     super(mainwindow, self).__init__()
     self.setObjectName("mainWindow")
     self.setStyleSheet(style.MAIN_WINDOW)
-    self.setWindowTitle("YouTube Media Player")
+    self.setWindowTitle("Cadence")
     self.setWindowIcon(QtGui.QIcon(os.path.join(os.getcwd(), "setup", "images", "windowicon.ico")))
     self.resize(400, 500)
     exitAction = QtGui.QAction(QtGui.QIcon('exit.png'), '&Exit', self)
