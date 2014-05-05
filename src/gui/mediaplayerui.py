@@ -250,12 +250,19 @@ class SongPlayingGroup(QtGui.QGroupBox):
   def __init__(self, name):
     super(SongPlayingGroup, self).__init__(name)
     self.setFont(StandardFont())
+    self.itemToMediaObject = {}
+    self.items = []
+    self.songPaths = []
     gboxLayout = QtGui.QVBoxLayout(self)
-    self.songList = QtGui.QListWidget()
+    self.songList = QtGui.QTableWidget()
+    self.songList.setRowCount(0)
+    self.songList.setColumnCount(5)
+    self.songList.setHorizontalHeaderLabels(["Track", "Album", "Artist", "Time", "Added"])
     self.songList.setObjectName("listWidget")
     self.songList.setFont(StandardFont())
     self.songList.setStyleSheet(style.LIST_WIDGET)
     self.songList.itemDoubleClicked.connect(self.onItemDoubleClicked)
+    self.songList.itemChanged.connect(self.onItemChanged)
     self.songList.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
     self.connect(
       self.songList,
@@ -270,10 +277,35 @@ class SongPlayingGroup(QtGui.QGroupBox):
       print("songlist.txt does exist\ncontinuing with initialization")
     with open("songlist.txt", 'r') as f:
       content = f.read()
+    rows = 0
     for song in content.split('\n'):
       if song != "":
         self.names[os.path.basename(song)] = song
-        self.songList.addItem(os.path.basename(song))
+        rows += 1
+        self.songList.setRowCount(rows)
+        mediaObject = Phonon.MediaObject(self)
+        mediaObject.setCurrentSource(song)
+        mediaObject.metaDataChanged.connect(self.onMetaDataChanged)
+        name = os.path.basename(song)
+        album = ''
+        artist = ''
+        length = '0:00'
+        added = ''
+        fields = [name, album, artist, length, added]
+        items = []
+        for idx, field in enumerate(fields):
+          item = QtGui.QTableWidgetItem(field)
+          items.append(item)
+          self.songList.setItem(rows-1, idx, item)
+        self.songPaths.append(song)
+        self.itemToMediaObject[id(items)] = mediaObject
+        self.items.append(items)
+    self.songList.verticalHeader().hide()
+    self.songList.horizontalHeader().setStretchLastSection(True)
+    self.songList.resizeColumnsToContents()
+    self.songList.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
+    self.songList.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
+    self.songList.setEditTriggers(QtGui.QAbstractItemView.SelectedClicked)
     gboxLayout.addWidget(self.songList)
     self.setLayout(gboxLayout)
 
@@ -286,10 +318,79 @@ class SongPlayingGroup(QtGui.QGroupBox):
       self.rightClickMenu.popup(self.songList.mapToGlobal(point))
 
   ##
+  #  On Item Changed.
+  def onItemChanged(self, item):
+    columnName = self.songlist.horizontalHeader().text(item.column())
+    metaName = None
+    if columnName == "Track":
+      metaName = "TITLE"
+    elif columnName == "Album":
+      metaName = "ALBUM"
+    elif columnName == "Artist":
+      metaName = "ARTIST"
+    if metaName is not None:
+      ## Write to file.
+      value = item.text()
+      for items, mediaObject in self.itemToMediaObject.items():
+        if item in items:
+          fName = mediaObject.currentSource().fileName()
+          _file = QtCore.QFile(fName)
+          break
+  
+  ##
   #  This is triggered when an item in the list is double clicked. A song will play.
   def onItemDoubleClicked(self, item):
     song = self.names[item.text()]
     self.playing.emit(song)
+
+  ##
+  #  On metadata changed.
+  def onMetaDataChanged(self):
+    for items, mediaObject in self.itemToMediaObject.items():
+      for _items in self.items:
+        if id(_items) == items:
+          items = _items
+          break
+      print(mediaObject.metaData())
+      name = mediaObject.metaData("TITLE")
+      if name == []:
+        # name = os.path.basename(song)
+        name = None
+      else:
+        name = name[0]
+      album = mediaObject.metaData("ALBUM")
+      if album == []:
+        album = ''
+      else:
+        album = album[0]
+      artist = mediaObject.metaData("ARTIST")
+      if artist == []:
+        artist = ''
+      else:
+        artist = artist[0]
+      length = mediaObject.totalTime()
+      seconds = length/1000
+      # if song.endswith("mp3") and sys.platform.startswith("win"):
+        # seconds = length/2224.25
+      if seconds - int(seconds) < 0.5:
+        seconds = int(seconds)
+      else:
+        seconds = int(seconds) + 1
+      _seconds = seconds
+      minutes = 0
+      while seconds >= 60:
+        minutes += 1
+        seconds -= 60
+      text = "{}:{}".format(minutes, seconds)
+      if seconds < 10:
+        text = "{}:0{}".format(minutes, seconds)
+      length = text
+      added = ''
+      fields = [name, album, artist, length, added]
+      for idx, field in enumerate(fields):
+        for item in items:
+          if item.column() == idx and field is not None:
+            item.setText(field)
 
   ##
   #  On song added, update the dictionary and list widget.
@@ -409,7 +510,6 @@ class MusicWidget(QtGui.QWidget):
       self.mediaObject.setCurrentSource(None)
       shutil.rmtree("cached")
     except Exception as ex:
-      print("Exception")
       pass
     e.accept()
 
@@ -554,7 +654,7 @@ class mainwindow(QtGui.QMainWindow):
     self.setStyleSheet(style.MAIN_WINDOW)
     self.setWindowTitle("Cadence")
     self.setWindowIcon(QtGui.QIcon(os.path.join(os.getcwd(), "setup", "images", "windowicon.ico")))
-    self.resize(400, 500)
+    self.resize(600, 800)
     exitAction = QtGui.QAction(QtGui.QIcon('exit.png'), '&Exit', self)
     exitAction.setShortcut('Ctrl+Q')
     exitAction.setStatusTip('Exit application')
@@ -592,7 +692,9 @@ class mainwindow(QtGui.QMainWindow):
       ret = subprocess.call(command, shell=True)
     else:
       ret = subprocess.call(cmd+' '+path, shell=True)
-    
+
+  ##
+  #  Making sure to explicitly close the music widget.
   def closeEvent(self, e):
     self.musicWidget.close()
     e.accept()
