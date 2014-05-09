@@ -94,9 +94,7 @@ COMBO_BOX = """#fileType {
 ## GROUP BOX
 
 GROUP_BOX = """#urlGroup {
-  border: 4px solid black;
-  border-radius: 5px;
-  background-color: #AAA;
+  border: 0px solid black;
 }"""
 
 ## LIST WIDGET

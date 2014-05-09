@@ -9,7 +9,7 @@
 #    youtube-dl (unix package)
 #    ffmpeg (unix package)
 #
-#  @authors milesw55, ntreado
+#  @author milesw55
 import os, sys
 import shutil
 import subprocess
@@ -37,7 +37,7 @@ class DownloadWidget(QtCore.QObject):
   def __init__(self):
     super(DownloadWidget, self).__init__()
 
-  def download(self, url, mp4, name):
+  def download(self, url, mp4, name, song, artist, album):
     if not re.match("\w+", name):
       self.error.emit("Invalid name for saving song.")
       return
@@ -65,6 +65,19 @@ class DownloadWidget(QtCore.QObject):
       command.append('2')
       command.append('-strict')
       command.append('-2')
+    addSong = song is not None and song != ''
+    addArtist = artist is not None and artist != ''
+    addAlbum = album is not None and album != ''
+    if addSong or addArtist or addAlbum:
+      if addSong:
+        command.append('-metadata')
+        command.append('title={}'.format(song))
+      if addArtist:
+        command.append('-metadata')
+        command.append('artist={}'.format(artist))
+      if addAlbum:
+        command.append('-metadata')
+        command.append('album={}'.format(album))
     command.append(".{}".format(audioFile))
     ret = subprocess.call(command, shell=True)
     if (ret != 0):
@@ -88,7 +101,7 @@ class StandardFont(QtGui.QFont):
 #  This class will hold the essential UI elements of the
 #  song adding features. This includes adding local songs
 #  and getting songs from URLs.
-class URLDownloadingGroup(QtGui.QGroupBox):
+class URLDownloadingGroup(QtGui.QVBoxLayout):
 
   ##
   #  Signal of added song.
@@ -96,69 +109,42 @@ class URLDownloadingGroup(QtGui.QGroupBox):
 
   ##
   #  Signal for download request.
-  downloadRequest = QtCore.Signal(str, str, str)
+  downloadRequest = QtCore.Signal(str, str, str, str, str, str)
 
   ##
   #  Main initializer function.
-  def __init__(self):
+  def __init__(self, parent):
     super(URLDownloadingGroup, self).__init__()
-    self.setSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Maximum)
-
-    rightGroupLayout = QtGui.QVBoxLayout(self)
-
-    directionLabel = QtGui.QLabel(
-      "You can add songs locally by clicking 'Add Local'." +
-      " Alternatively, you can enter a video URL such as one" +
-      "from YouTube and click 'Add URL' to save the audio from that video to your library." +
-      " Please note that copyrighted videos will not work. Enjoy."
-    )
-    directionLabel.setFont(StandardFont())
-    directionLabel.setWordWrap(True)
-    rightGroupLayout.addWidget(directionLabel)
-
+    self._parent = parent
+    # self.setSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Maximum)
+    self.setContentsMargins(0,0,0,0)
     self.findSongGroup = QtGui.QGroupBox()
     self.findSongGroup.setSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Maximum)
     self.findSongGroup.setObjectName("urlGroup")
     self.findSongGroup.setStyleSheet(style.GROUP_BOX)
-    rightGroupLayout.addWidget(self.findSongGroup)
+    self.addWidget(self.findSongGroup)
 
     groupLayout = QtGui.QVBoxLayout(self.findSongGroup)
+    groupLayout.setContentsMargins(0,0,0,0)
 
     urlLayout = QtGui.QHBoxLayout()
-    urlLabel = QtGui.QLabel("URL:")
-    urlLabel.setFont(StandardFont())
+    urlLayout.setContentsMargins(0,0,0,0)
     self.urlLine = QtGui.QLineEdit()
     self.urlLine.setStyleSheet("QLineEdit { background-color: #FFF; }")
     self.urlLine.setFont(StandardFont())
-    if sys.platform.startswith("darwin"):
-      urlLayout.addSpacing(18)
-    else:
-      urlLayout.addSpacing(24)
-    urlLayout.addWidget(urlLabel)
+    self.addButton = QtGui.QPushButton("Add URL")
+    self.addButton.setObjectName("addButton")
+    self.addButton.setStyleSheet(style.button("addButton"))
+    self.addButton.setFont(StandardFont())
+    self.addButton.clicked.connect(self.onAddClicked)
     urlLayout.addWidget(self.urlLine)
-    urlLayout.addSpacing(65)
+    urlLayout.addWidget(self.addButton)
 
-    nameLayout = QtGui.QHBoxLayout()
-    nameLabel = QtGui.QLabel("Save As:")
-    nameLabel.setFont(StandardFont())
-    self.nameLine = QtGui.QLineEdit()
-    self.nameLine.setStyleSheet("QLineEdit { background-color: #FFF; }")
-    self.nameLine.setFont(StandardFont())
-    self.nameEnd = QtGui.QComboBox()
-    self.nameEnd.setFont(StandardFont())
-    self.nameEnd.setObjectName("fileType")
-    self.nameEnd.setStyleSheet(style.COMBO_BOX)
-    self.nameEnd.addItem(".mp3")
-    self.nameEnd.addItem(".ogg")
-    self.nameEnd.addItem(".wav")
-    nameLayout.addWidget(nameLabel)
-    nameLayout.addWidget(self.nameLine)
-    nameLayout.addWidget(self.nameEnd)
 
     groupLayout.addLayout(urlLayout)
-    groupLayout.addLayout(nameLayout)
 
     self.songButtonLayout = QtGui.QHBoxLayout()
+    self.songButtonLayout.setContentsMargins(0,0,0,0)
     
     self.statusLabel = QtGui.QLabel()
     self.statusLabel.setObjectName("status")
@@ -171,17 +157,10 @@ class URLDownloadingGroup(QtGui.QGroupBox):
     self.addSongButton.setFont(StandardFont())
     self.addSongButton.clicked.connect(self.addSong)
     self.songButtonLayout.addStretch(0)
-    self.songButtonLayout.addWidget(self.addSongButton)
-
-    self.addButton = QtGui.QPushButton("Add URL")
-    self.addButton.setObjectName("addButton")
-    self.addButton.setStyleSheet(style.button("addButton"))
-    self.addButton.setFont(StandardFont())
-    self.addButton.clicked.connect(self.onAddClicked)
-    self.songButtonLayout.addWidget(self.addButton)
+    # self.songButtonLayout.addWidget(self.addSongButton)
     self.thread = None
 
-    rightGroupLayout.addLayout(self.songButtonLayout)
+    self.addLayout(self.songButtonLayout)
 
   ##
   #  This function will act as a slot to the 'add song'
@@ -200,10 +179,22 @@ class URLDownloadingGroup(QtGui.QGroupBox):
   ##
   #  This will be triggered when the addButton is clicked.
   def onAddClicked(self):
-    mp4 = "{}.mp4".format(self.nameLine.text())
+    song = None
+    artist = None
+    album = None
+    text, ok = QtGui.QInputDialog().getText(self._parent, "Download Information", "Song Title:", QtGui.QLineEdit.Normal)
+    if ok and text:
+      song = text
+    text, ok = QtGui.QInputDialog().getText(self._parent, "Download Information", "Artist:", QtGui.QLineEdit.Normal)
+    if ok and text:
+      artist = text
+    text, ok = QtGui.QInputDialog().getText(self._parent, "Download Information", "Album Title:", QtGui.QLineEdit.Normal)
+    if ok and text:
+      album = text
+    mp4 = "{}.mp4".format(song)
     if not os.path.isdir(os.path.join(os.getcwd(), "downloads")):
       os.makedirs(os.path.join(os.getcwd(), "downloads"))
-    audioName = "{}{}".format(self.nameLine.text(), self.nameEnd.currentText())
+    audioName = "{}{}".format(song, ".mp3")
     url = self.urlLine.text()
     if self.thread is not None:
       self.thread.quit()
@@ -217,7 +208,7 @@ class URLDownloadingGroup(QtGui.QGroupBox):
     self.addButton.setEnabled(False)
     self.statusLabel.setStyleSheet("#status { color: black; }")
     self.statusLabel.setText("Downloading...")
-    self.downloadRequest.emit(url, mp4, audioName)
+    self.downloadRequest.emit(url, mp4, audioName, song, artist, album)
 
   ##
   #  Updates.
@@ -250,14 +241,13 @@ class SongPlayingGroup(QtGui.QGroupBox):
   def __init__(self, name):
     super(SongPlayingGroup, self).__init__(name)
     self.setFont(StandardFont())
-    self.itemToMediaObject = {}
+    self.itemToSong = {}
     self.items = []
-    self.songPaths = []
     gboxLayout = QtGui.QVBoxLayout(self)
     self.songList = QtGui.QTableWidget()
     self.songList.setRowCount(0)
-    self.songList.setColumnCount(5)
-    self.songList.setHorizontalHeaderLabels(["Track", "Album", "Artist", "Time", "Added"])
+    self.songList.setColumnCount(4)
+    self.songList.setHorizontalHeaderLabels(["Track", "Album", "Artist", "Time"])
     self.songList.setObjectName("listWidget")
     self.songList.setFont(StandardFont())
     self.songList.setStyleSheet(style.LIST_WIDGET)
@@ -283,32 +273,94 @@ class SongPlayingGroup(QtGui.QGroupBox):
         self.names[os.path.basename(song)] = song
         rows += 1
         self.songList.setRowCount(rows)
-        mediaObject = Phonon.MediaObject(self)
-        mediaObject.setCurrentSource(song)
-        mediaObject.metaDataChanged.connect(self.onMetaDataChanged)
         name = os.path.basename(song)
+        ffmpeg = "ffmpeg"
+        if sys.platform.startswith("win"):
+          youtube = '.\\src\\engine\\youtube-dl.exe'
+          ffmpeg = '.\\src\\engine\\ffmpeg\\bin\\ffmpeg.exe'
+        elif sys.platform.startswith("darwin"):
+          ffmpeg = './src/engine/ffmpeg/bin/ffmpeg'
+        metaFile = 'metadata.txt'
+        ret = subprocess.call([ffmpeg,"-i", song, "-f", "ffmetadata", metaFile], shell=True)
         album = ''
         artist = ''
         length = '0:00'
-        added = ''
-        fields = [name, album, artist, length, added]
+        lines = []
+        with open(metaFile, 'r') as f:
+          lines = f.readlines()
+        for line in lines:
+          if len(line.split("=")) == 2:
+            key, value = line.split("=")
+            if key == 'title':
+              name = value.strip()
+            elif key == 'album':
+              album = value.strip()
+            elif key == 'artist':
+              artist = value.strip()
+        os.remove(metaFile)
+        infoFile = 'info.txt'
+        ret = subprocess.call([ffmpeg,"-i", song, "2>{}".format(infoFile)], shell=True)
+        with open(infoFile, 'r') as f:
+          lines = f.readlines()
+        for line in lines:
+          if line.strip().startswith("Duration"):
+            length = line.strip().split(",")[0].split(" ")[1]
+            break
+        os.remove(infoFile)
+        if length.startswith("00"):
+          length = length[3:]
+        if length.startswith("0"):
+          length = length[1:]
+        rest, seconds = length.rsplit(":", 1)
+        value = int(float(seconds))
+        if float(seconds) - value > 0.5:
+          seconds = str(value+1)
+          if value+1 < 10:
+            seconds = "0" + str(value+1)
+        else:
+          seconds = str(value)
+          if value < 10:
+            seconds = "0" + str(value)
+        length = rest + ":" + seconds
+        fields = [name, album, artist, length]
         items = []
         for idx, field in enumerate(fields):
           item = QtGui.QTableWidgetItem(field)
+          print(item.icon().isNull())
+          if idx == 3:
+            item.setTextAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignVCenter)
+            item.setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled)
+          else:
+            item.setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled|QtCore.Qt.ItemIsEditable)
           items.append(item)
           self.songList.setItem(rows-1, idx, item)
-        self.songPaths.append(song)
-        self.itemToMediaObject[id(items)] = mediaObject
+        self.itemToSong[id(items)] = song
         self.items.append(items)
     self.songList.verticalHeader().hide()
     self.songList.horizontalHeader().setStretchLastSection(True)
-    self.songList.resizeColumnsToContents()
+    self.songList.setColumnWidth(0, 200)
     self.songList.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
     self.songList.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
     self.songList.setEditTriggers(QtGui.QAbstractItemView.SelectedClicked)
     gboxLayout.addWidget(self.songList)
     self.setLayout(gboxLayout)
 
+  ##
+  #  Returns the current song.
+  def getCurrentSong(self):
+    # Find song name.
+    item = self.songList.currentItem()
+    __items = None
+    song = None
+    for _items in self.items:
+      for _item in _items:
+        if id(_item) == id(item):
+          __items = _items
+    for items, _song in self.itemToSong.items():
+      if __items is not None and id(__items) == items:
+        song = _song
+    return song
+  
   ##
   #  Context Menu Requested.
   def onContextMenuRequested(self, point):
@@ -320,91 +372,144 @@ class SongPlayingGroup(QtGui.QGroupBox):
   ##
   #  On Item Changed.
   def onItemChanged(self, item):
-    columnName = self.songlist.horizontalHeader().text(item.column())
+    columnName = self.songList.horizontalHeaderItem(item.column()).text()
     metaName = None
+    metaValue = item.text()
+    # Find song name.
+    __items = None
+    for _items in self.items:
+      for _item in _items:
+        if id(_item) == id(item):
+          __items = _items
+    song = None
+    for items, _song in self.itemToSong.items():
+      if __items is not None and id(__items) == items:
+        song = _song
+        break
     if columnName == "Track":
-      metaName = "TITLE"
+      metaName = "title"
     elif columnName == "Album":
-      metaName = "ALBUM"
+      metaName = "album"
     elif columnName == "Artist":
-      metaName = "ARTIST"
-    if metaName is not None:
-      ## Write to file.
-      value = item.text()
-      for items, mediaObject in self.itemToMediaObject.items():
-        if item in items:
-          fName = mediaObject.currentSource().fileName()
-          _file = QtCore.QFile(fName)
-          break
+      metaName = "artist"
+    if metaName is not None and song is not None:
+      ffmpeg = "ffmpeg"
+      if sys.platform.startswith("win"):
+        youtube = '.\\src\\engine\\youtube-dl.exe'
+        ffmpeg = '.\\src\\engine\\ffmpeg\\bin\\ffmpeg.exe'
+      elif sys.platform.startswith("darwin"):
+        ffmpeg = './src/engine/ffmpeg/bin/ffmpeg'
+      cmd = [ffmpeg, "-i", song, "-metadata"]
+      out = 'out12341325.wav'
+      none = False
+      if metaName == "title":
+        cmd.append('title={}'.format(metaValue))
+        cmd.append(out)
+        ret = subprocess.call(cmd, shell=True)
+      elif metaName == "album":
+        cmd.append('album={}'.format(metaValue))
+        cmd.append(out)
+        ret = subprocess.call(cmd, shell=True)
+      elif metaName == "artist":
+        cmd.append('artist={}'.format(metaValue))
+        cmd.append(out)
+        ret = subprocess.call(cmd, shell=True)
+      else:
+        none = True
+      if not none:
+        cmd = [ffmpeg, "-i", out, song, "-y"]
+        ret = subprocess.call(cmd, shell=True)
+        os.remove(out)
   
   ##
   #  This is triggered when an item in the list is double clicked. A song will play.
   def onItemDoubleClicked(self, item):
-    song = self.names[item.text()]
+    # Find song name.
+    __items = None
+    song = None
+    for _items in self.items:
+      for _item in _items:
+        if id(_item) == id(item):
+          __items = _items
+    for items, _song in self.itemToSong.items():
+      if __items is not None and id(__items) == items:
+        song = _song
+        break
     self.playing.emit(song)
-
-  ##
-  #  On metadata changed.
-  def onMetaDataChanged(self):
-    for items, mediaObject in self.itemToMediaObject.items():
-      for _items in self.items:
-        if id(_items) == items:
-          items = _items
-          break
-      print(mediaObject.metaData())
-      name = mediaObject.metaData("TITLE")
-      if name == []:
-        # name = os.path.basename(song)
-        name = None
-      else:
-        name = name[0]
-      album = mediaObject.metaData("ALBUM")
-      if album == []:
-        album = ''
-      else:
-        album = album[0]
-      artist = mediaObject.metaData("ARTIST")
-      if artist == []:
-        artist = ''
-      else:
-        artist = artist[0]
-      length = mediaObject.totalTime()
-      seconds = length/1000
-      # if song.endswith("mp3") and sys.platform.startswith("win"):
-        # seconds = length/2224.25
-      if seconds - int(seconds) < 0.5:
-        seconds = int(seconds)
-      else:
-        seconds = int(seconds) + 1
-      _seconds = seconds
-      minutes = 0
-      while seconds >= 60:
-        minutes += 1
-        seconds -= 60
-      text = "{}:{}".format(minutes, seconds)
-      if seconds < 10:
-        text = "{}:0{}".format(minutes, seconds)
-      length = text
-      added = ''
-      fields = [name, album, artist, length, added]
-      for idx, field in enumerate(fields):
-        for item in items:
-          if item.column() == idx and field is not None:
-            item.setText(field)
 
   ##
   #  On song added, update the dictionary and list widget.
   def onSongAdded(self, fileName):
-    self.names[os.path.basename(fileName)] = fileName
-    self.songList.addItem(os.path.basename(fileName))
+    song = fileName
+    rows = self.songList.rowCount()
+    rows += 1
+    self.songList.setRowCount(rows)
+    name = os.path.basename(song)
+    ffmpeg = "ffmpeg"
+    if sys.platform.startswith("win"):
+      youtube = '.\\src\\engine\\youtube-dl.exe'
+      ffmpeg = '.\\src\\engine\\ffmpeg\\bin\\ffmpeg.exe'
+    elif sys.platform.startswith("darwin"):
+      ffmpeg = './src/engine/ffmpeg/bin/ffmpeg'
+    metaFile = 'metadata.txt'
+    ret = subprocess.call([ffmpeg,"-i", song, "-f", "ffmetadata", metaFile], shell=True)
+    album = ''
+    artist = ''
+    length = '0:00'
+    lines = []
+    with open(metaFile, 'r') as f:
+      lines = f.readlines()
+    for line in lines:
+      if len(line.split("=")) == 2:
+        key, value = line.split("=")
+        if key == 'title':
+          name = value.strip()
+        elif key == 'album':
+          album = value.strip()
+        elif key == 'artist':
+          artist = value.strip()
+    os.remove(metaFile)
+    infoFile = 'info.txt'
+    ret = subprocess.call([ffmpeg,"-i", song, "2>{}".format(infoFile)], shell=True)
+    with open(infoFile, 'r') as f:
+      lines = f.readlines()
+    for line in lines:
+      if line.strip().startswith("Duration"):
+        length = line.strip().split(",")[0].split(" ")[1]
+        break
+    os.remove(infoFile)
+    if length.startswith("00"):
+      length = length[3:]
+    if length.startswith("0"):
+      length = length[1:]
+    rest, seconds = length.rsplit(":", 1)
+    value = int(float(seconds))
+    if float(seconds) - value > 0.5:
+      seconds = str(value+1)
+      if value+1 < 10:
+        seconds = "0" + str(value+1)
+    else:
+      seconds = str(value)
+      if value < 10:
+        seconds = "0" + str(value)
+    length = rest + ":" + seconds
+    fields = [name, album, artist, length]
+    items = []
+    for idx, field in enumerate(fields):
+      item = QtGui.QTableWidgetItem(field)
+      if idx == 3:
+        item.setTextAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignVCenter)
+      items.append(item)
+      self.songList.setItem(rows-1, idx, item)
+    self.itemToSong[id(items)] = song
+    self.items.append(items)
 
   ##
   #  Remove Triggered.
   def removeTriggered(self):
-    item = self.songList.currentItem()
-    songName = self.names[item.text()]
-    row = self.songList.row(item)
-    self.songList.takeItem(row)
+    songName = self.getCurrentSong()
+    row = self.songList.currentRow()
+    self.songList.removeRow(row)
     lines = None
     with open("songlist.txt", "r") as f:
       lines = f.readlines()
@@ -439,7 +544,7 @@ class MusicWidget(QtGui.QWidget):
     self.rightLayout = QtGui.QVBoxLayout(self)
     self.groupbox = SongPlayingGroup("Your Songs:")
     self.rightLayout.addWidget(self.groupbox)
-    self.rightGroup = URLDownloadingGroup()
+    self.rightGroup = URLDownloadingGroup(self)
     self.rightGroup.songAdded.connect(self.groupbox.onSongAdded)
     self.groupbox.playing.connect(self.onPlaying)
     mediaLayout = QtGui.QVBoxLayout()
@@ -476,23 +581,22 @@ class MusicWidget(QtGui.QWidget):
     mediaLayout.addWidget(self.slider)
     mediaLayout.addLayout(buttonLayout)
     self.rightLayout.addLayout(mediaLayout)
-    self.rightLayout.addWidget(self.rightGroup)
+    self.rightLayout.addLayout(self.rightGroup)
     
   ##
   #  This function will act as a slot to the 'back button'
   #  being triggered.
   def backTriggered(self):
-    song = self.groupbox.names[self.groupbox.songList.currentItem().text()]
+    song = self.groupbox.getCurrentSong()
     row = self.groupbox.songList.currentRow() - 1
     state = self.mediaObject.state()
     currentTime = self.mediaObject.totalTime() - self.mediaObject.remainingTime()
     if (self.prevSong is None) or row < 0 or currentTime > 3000:
       self.prevSong = song
-      self.groupbox.songList.setCurrentRow(row+1)
+      self.groupbox.songList.selectRow(row+1)
     else:
-      self.groupbox.songList.setCurrentRow(row)
-      _prevSong = self.groupbox.songList.item(row).text()
-      self.prevSong = self.groupbox.names[_prevSong]
+      self.groupbox.songList.selectRow(row)
+      self.prevSong = self.groupbox.getCurrentSong()
     self.setCurrentSource(self.prevSong)
     if self.started == False:
       self.started = True
@@ -527,13 +631,12 @@ class MusicWidget(QtGui.QWidget):
   #  Play next song on finished.
   def onFinished(self):
     row = self.groupbox.songList.currentRow() + 1
-    if row >= self.groupbox.songList.count():
+    if row >= self.groupbox.songList.rowCount():
       self.playing = False
       self.playButton.setIcon(QtGui.QIcon(os.path.join(os.path.dirname(__file__), "images", "play.png")))
       return
-    self.prevSong = self.groupbox.songList.item(row).text()
-    self.groupbox.songList.setCurrentRow(row)
-    self.prevSong = self.groupbox.names[self.prevSong]
+    self.groupbox.songList.selectRow(row)
+    self.prevSong = self.groupbox.getCurrentSong()
     self.setCurrentSource(self.prevSong)
     self.mediaObject.play()
   
@@ -541,10 +644,10 @@ class MusicWidget(QtGui.QWidget):
   #  This function will act as a slot to the 'SongPlayingGroup.playing' signal
   #  being triggered.
   def onPlaying(self, song):
+    self.prevSong = song
     self.setCurrentSource(song)
     self.mediaObject.play()
     self.playButton.setIcon(QtGui.QIcon(os.path.join(os.path.dirname(__file__), "images", "pause.png")))
-    self.prevSong = self.groupbox.names[self.groupbox.songList.currentItem().text()]
     self.playing = True
     self.started = True
 
@@ -594,7 +697,7 @@ class MusicWidget(QtGui.QWidget):
   #  This function will act as a slot to the 'play button'
   #  being triggered.
   def playTriggered(self):
-    song = self.groupbox.names[self.groupbox.songList.currentItem().text()]
+    song = self.groupbox.getCurrentSong()
     if self.playing:
       self.playing = False
     else:
@@ -603,6 +706,8 @@ class MusicWidget(QtGui.QWidget):
       if (self.prevSong is None) or (self.prevSong != song):
         self.prevSong = song
         self.setCurrentSource(song)
+        row = self.groupbox.songList.currentRow()
+        self.groupbox.songList.selectRow(row)
       if self.started == False:
         self.started = True
         self.mediaObject.play()
