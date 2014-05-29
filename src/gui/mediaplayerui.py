@@ -751,6 +751,10 @@ class MusicWidget(QtGui.QWidget):
 ##
 #  This is the main window.
 class mainwindow(QtGui.QMainWindow):
+
+  ## Signal for letting the widget know that a song has been added.
+  songAdded = QtCore.Signal(str)
+
   ##
   #  Main intializer.
   def __init__(self):
@@ -760,6 +764,9 @@ class mainwindow(QtGui.QMainWindow):
     self.setWindowTitle("Cadence")
     self.setWindowIcon(QtGui.QIcon(os.path.join(os.getcwd(), "setup", "images", "windowicon.ico")))
     self.resize(600, 800)
+    addFileAction = QtGui.QAction("Add File", self)
+    addFileAction.setShortcut('Ctrl+F')
+    addFileAction.triggered.connect(self.addFile)
     exitAction = QtGui.QAction(QtGui.QIcon('exit.png'), '&Exit', self)
     exitAction.setShortcut('Ctrl+Q')
     exitAction.setStatusTip('Exit application')
@@ -772,11 +779,21 @@ class mainwindow(QtGui.QMainWindow):
 
     menubar = self.menuBar()
     fileMenu = menubar.addMenu('&File')
+    fileMenu.addAction(addFileAction)
     fileMenu.addAction(exitAction)
     downloadsMenu = menubar.addMenu("&Downloads")
     downloadsMenu.addAction(viewDownloadsAction)
     self.musicWidget = MusicWidget()
+    self.songAdded.connect(self.musicWidget.groupbox.onSongAdded)
     self.setCentralWidget(self.musicWidget)
+
+  ##
+  #  Adds a local file to the songlist.
+  def addFile(self):
+    fileName, fileType = QtGui.QFileDialog.getOpenFileName(self, "Add song", os.getcwd(), "Audio Files (*.ogg *.mp3 *.wav)")
+    with open("songlist.txt", 'a') as f:
+      f.write(fileName + '\n')
+    self.songAdded.emit(fileName)
 
   ##
   #  This function will open the downloads folder.
